@@ -1,0 +1,8 @@
+{
+  "name": "translate-clipboard",
+  "description": "translate clipboard text",
+  "uuid": "translate-clipboard@lsnow.github.io",
+  "shell-version": [
+    "3.38"
+  ]
+}
