@@ -49,11 +49,12 @@ class TcIndicator extends PanelMenu.Button {
 
         this._cancellable = new Gio.Cancellable();
 
-        let box = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
-        box.add_child(new St.Icon({
-            icon_name: 'translate-clipboard-symbolic',
+        this._icon = new St.Icon({
             style_class: 'system-status-icon',
-        }));
+        });
+        this._icon.gicon = Gio.icon_new_for_string(`${Me.path}/icons/translator-symbolic.svg`);
+        let box = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
+        box.add_child(this._icon);
         this.add_child(box);
 
         let item = new PopupMenu.PopupSwitchMenuItem(_('Toggle translate'), true, null);
@@ -219,6 +220,7 @@ class TcIndicator extends PanelMenu.Button {
         if (!this._showOriginalPhonetics)
             cmd.push('-show-original-phonetics n')
 
+        cmd.push('-no-browser');
         cmd.push(text);
         return this._exec(cmd);
     }
