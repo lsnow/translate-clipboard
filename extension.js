@@ -31,6 +31,7 @@ const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const MessageTray = imports.ui.messageTray;
+const Util = imports.misc.util;
 
 /* crow-translation */
 /*
@@ -75,11 +76,13 @@ class TcIndicator extends PanelMenu.Button {
             if (this._enabled)
             {
                 let [x, y, mods] = global.get_pointer();
-                let buttonMask = (Clutter.ModifierType.BUTTON1_MASK |
-                                  Clutter.ModifierType.BUTTON2_MASK |
-                                  Clutter.ModifierType.BUTTON3_MASK) &
-                                 mods;
-                if (buttonMask)
+                let buttonMask = Clutter.ModifierType.BUTTON1_MASK |
+                                 Clutter.ModifierType.BUTTON2_MASK |
+                                 Clutter.ModifierType.BUTTON3_MASK |
+                                 Clutter.ModifierType.SHIFT_MASK |
+                                 Clutter.ModifierType.CONTROL_MASK |
+                                 Clutter.ModifierType.SUPER_MASK;
+                if (buttonMask & mods)
                     return;
                 this._clipboardChanged();
             }
@@ -93,7 +96,9 @@ class TcIndicator extends PanelMenu.Button {
     _clipboardChanged() {
         this._clipboard.get_text(St.ClipboardType.PRIMARY,
             (clipboard, text) => {
-                if (text && text != '' && text != this._oldtext) {
+                if (text && text != '' && text != this._oldtext &&
+                    !Util.findUrls(text).length &&
+                    !RegExp(/\d+/).exec(text)) {
                     this._oldtext = text;
                     this._translate(text).then(res => {
                         this._notify(res);
@@ -123,6 +128,11 @@ class TcIndicator extends PanelMenu.Button {
             this._popupTimeoutId = 0;
         }
         this._label.clutter_text.set_markup(result);
+        let monitor = Main.layoutManager.currentMonitor;
+        if (x + this._box.get_width() > monitor.x + monitor.width)
+            x = monitor.x + monitor.width - this._box.get_width();
+        if (y + this._box.get_height() > monitor.y + monitor.height)
+            y = monitor.y + monitor.height - this._box.get_height();
         this._box.set_position(x, y);
         this._box.show();
         this._updatePopupTimeout(5000);
@@ -135,7 +145,7 @@ class TcIndicator extends PanelMenu.Button {
         if (x > x_ && y > y_ &&
             x < x_ + w_ && y < y_ + h_)
         {
-            this._updatePopupTimeout(3000);
+            this._updatePopupTimeout(1000);
             return;
         }
 
