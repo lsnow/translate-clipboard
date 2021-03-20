@@ -48,7 +48,7 @@ class TcIndicator extends PanelMenu.Button {
         this._oldtext = null;
         this._showOriginalPhonetics = true;
 
-        this._cancellable = new Gio.Cancellable();
+        //this._cancellable = new Gio.Cancellable();
 
         this._icon = new St.Icon({
             style_class: 'system-status-icon',
@@ -91,6 +91,9 @@ class TcIndicator extends PanelMenu.Button {
 
     destroy() {
         this._selection.disconnect(this._owner_changed_id);
+        if (this._box)
+            this._box.destroy();
+        super.destroy();
     }
 
     _clipboardChanged() {
