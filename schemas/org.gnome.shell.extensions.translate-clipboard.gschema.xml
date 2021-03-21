@@ -1,0 +1,45 @@
+<schemalist gettext-domain="gnome-shell-extensions">
+  <schema id="org.gnome.shell.extensions.translate-clipboard"
+      path="/org/gnome/shell/extensions/translate-clipboard/">
+
+    <key name="enable-trans" type="b">
+      <default>true</default>
+      <summary>Enable/Disable translation</summary>
+      <description>
+        Enable or disable translation.
+      </description>
+    </key>
+
+    <key name="enable-selection" type="b">
+      <default>true</default>
+      <summary>Use selection on X.org</summary>
+      <description>
+        Use current selection instead of clipboard on notifications and menu. Only on X.org (No Wayland-Support)
+      </description>
+    </key>
+
+    <key name="brief-mode" type="b">
+      <default>false</default>
+      <summary>Brief mode</summary>
+      <description>
+        Brief mode
+      </description>
+    </key>
+    <key name="translate-options" type="s">
+      <default>':en'</default>
+      <summary>Translate Option</summary>
+      <description>
+          Command-Parameter to translate the string
+      </description>
+    </key>
+
+    <key name="translate-from-selection" type="as">
+      <default><![CDATA[['<Super>T']]]></default>
+      <summary>Toggle the extension</summary>
+      <description>
+        Key to toggle translate selected text
+      </description>
+    </key>
+
+  </schema>
+</schemalist>

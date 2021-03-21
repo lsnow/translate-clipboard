@@ -33,6 +33,8 @@ const PopupMenu = imports.ui.popupMenu;
 const MessageTray = imports.ui.messageTray;
 const Util = imports.misc.util;
 
+const Prefs = Me.imports.prefs;
+
 /* crow-translation */
 /*
 const TRANS_CMD = "crow";
@@ -58,17 +60,28 @@ class TcIndicator extends PanelMenu.Button {
         box.add_child(this._icon);
         this.add_child(box);
 
+        this._settings = Prefs.SettingsSchema;
+
         let item = new PopupMenu.PopupSwitchMenuItem(_('Toggle translate'), true, null);
         item.connect('toggled', () => {
             this._enabled = item.state;
+            this._settings.set_boolean(Prefs.Fields.ENABLE_TRANS, this._enabled);
         });
         this.menu.addMenuItem(item);
+        this._enableTransItem = item;
 
         let item1 = new PopupMenu.PopupSwitchMenuItem(_('Brief mode'), false, null);
         item1.connect('toggled', () => {
             this._briefMode = item1.state;
+            this._settings.set_boolean(Prefs.Fields.BRIEF_MODE, this._briefMode);
         });
         this.menu.addMenuItem(item1);
+        this._briefModeItem = item1;
+
+        this._settingsChangedId = this._settings.connect('changed', () => {
+            this._settingsChanged();
+        });
+        this._settingsChanged();
 
         this._selection = global.display.get_selection();
         this._clipboard = St.Clipboard.get_default();
@@ -96,13 +109,23 @@ class TcIndicator extends PanelMenu.Button {
         super.destroy();
     }
 
+    _settingsChanged() {
+        this._enableTransItem.setToggleState(this._settings.get_boolean(Prefs.Fields.ENABLE_TRANS));
+        this._briefModeItem.setToggleState(this._settings.get_boolean(Prefs.Fields.BRIEF_MODE));
+        this._enabled = this._enableTransItem.state;
+        this._briefMode = this._briefModeItem.state;
+    }
+
     _clipboardChanged() {
         this._clipboard.get_text(St.ClipboardType.PRIMARY,
             (clipboard, text) => {
                 if (text && text != '' && text != this._oldtext &&
+                    text[0] != '/' &&
+                    !RegExp(/.+?\..+/).exec(text) &&
                     !Util.findUrls(text).length &&
                     !RegExp(/\d+/).exec(text)) {
                     this._oldtext = text;
+                    [this._x, this._y] = global.get_pointer();
                     this._translate(text).then(res => {
                         this._notify(res);
                     });
@@ -114,8 +137,9 @@ class TcIndicator extends PanelMenu.Button {
         let fields = JSON.parse(result);
         source = fields['source'];
         result = fields['translation'];
-        */
         let [x, y] = global.get_pointer();
+        */
+        let [x, y] = [this._x, this._y];//global.get_pointer();
         if (!this._box)
         {
             this._box = new St.BoxLayout({ style_class: "translate-box",
