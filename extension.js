@@ -82,10 +82,32 @@ class TcIndicator extends PanelMenu.Button {
             this._settingsChanged();
         });
         this._settingsChanged();
+        this._watchClipboard();
+    }
 
+    destroy() {
+        this._selection.disconnect(this._ownerChangedId);
+        this._settings.disconnect(this._settingsChangedId);
+        if (this._box)
+            this._box.destroy();
+         if (this._popupTimeoutId) {
+             GLib.source_remove(this._popupTimeoutId);
+             this._popupTimeoutId = 0;
+         }
+        super.destroy();
+    }
+
+    _settingsChanged() {
+        this._enableTransItem.setToggleState(this._settings.get_boolean(Prefs.Fields.ENABLE_TRANS));
+        this._briefModeItem.setToggleState(this._settings.get_boolean(Prefs.Fields.BRIEF_MODE));
+        this._enabled = this._enableTransItem.state;
+        this._briefMode = this._briefModeItem.state;
+    }
+
+    _watchClipboard() {
         this._selection = global.display.get_selection();
         this._clipboard = St.Clipboard.get_default();
-        this._owner_changed_id = this._selection.connect('owner-changed', () => {
+        this._ownerChangedId = this._selection.connect('owner-changed', () => {
             if (this._enabled)
             {
                 let [x, y, mods] = global.get_pointer();
@@ -100,20 +122,6 @@ class TcIndicator extends PanelMenu.Button {
                 this._clipboardChanged();
             }
         });
-    }
-
-    destroy() {
-        this._selection.disconnect(this._owner_changed_id);
-        if (this._box)
-            this._box.destroy();
-        super.destroy();
-    }
-
-    _settingsChanged() {
-        this._enableTransItem.setToggleState(this._settings.get_boolean(Prefs.Fields.ENABLE_TRANS));
-        this._briefModeItem.setToggleState(this._settings.get_boolean(Prefs.Fields.BRIEF_MODE));
-        this._enabled = this._enableTransItem.state;
-        this._briefMode = this._briefModeItem.state;
     }
 
     _clipboardChanged() {
