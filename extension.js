@@ -34,6 +34,7 @@ const MessageTray = imports.ui.messageTray;
 const Util = imports.misc.util;
 
 const Prefs = Me.imports.prefs;
+const Languages = Me.imports.languages;
 
 /* crow-translation */
 /*
@@ -61,6 +62,27 @@ class TcIndicator extends PanelMenu.Button {
         this.add_child(box);
 
         this._settings = Prefs.SettingsSchema;
+
+        let codes = new PopupMenu.PopupBaseMenuItem({reactive : false,
+                                                     can_focus : false});
+        this._from = new St.Entry({x_align : Clutter.ActorAlign.START,
+                                   hint_text : _("Auto")});
+        this._to = new St.Entry({x_align : Clutter.ActorAlign.END,
+                                 hint_text : _("Auto")});
+        let l = new St.Label ({text: "->",
+                               x_expand: true,
+                               x_align: Clutter.ActorAlign.CENTER,
+                               y_align: Clutter.ActorAlign.CENTER});
+        codes.add(this._from);
+        codes.add(l);
+        codes.add(this._to);
+        this.menu.addMenuItem(codes);
+        this._from.clutter_text.connect('key-focus-out', ()=> {
+            this._settings.set_string(Prefs.Fields.FROM, this._from.text);
+        });
+        this._to.clutter_text.connect('key-focus-out', ()=> {
+            this._settings.set_string(Prefs.Fields.TO, this._to.text);
+        });
 
         let item = new PopupMenu.PopupSwitchMenuItem(_('Toggle translate'), true, null);
         item.connect('toggled', () => {
@@ -98,10 +120,52 @@ class TcIndicator extends PanelMenu.Button {
     }
 
     _settingsChanged() {
+        this._oldtext = null;
         this._enableTransItem.setToggleState(this._settings.get_boolean(Prefs.Fields.ENABLE_TRANS));
         this._briefModeItem.setToggleState(this._settings.get_boolean(Prefs.Fields.BRIEF_MODE));
         this._enabled = this._enableTransItem.state;
         this._briefMode = this._briefModeItem.state;
+
+        let from = this._settings.get_string(Prefs.Fields.FROM);
+        let to = this._settings.get_string(Prefs.Fields.TO);
+
+        let isoLangs = Languages.isoLangs;
+
+        if (from == '')
+            from = 'auto';
+        if (to == '')
+            to = 'auto';
+
+        if (from != 'auto' && (isoLangs[from] == undefined))
+        {
+            for (code in isoLangs)
+            {
+                if (isoLangs[code].name.indexOf(from) || isoLangs[code].nativeName.indexOf(from))
+                {
+                    from = code;
+                    break;
+                }
+            }
+        }
+        if (isoLangs[from] == undefined)
+            from = 'auto';
+
+        if (to != 'auto' && (isoLangs[to] == undefined))
+        {
+            for (code in isoLangs)
+            {
+                if (isoLangs[code].name.indexOf(to) || isoLangs[code].nativeName.indexOf(to))
+                {
+                    to = code;
+                    break;
+                }
+            }
+        }
+        if (isoLangs[to] == undefined)
+            to = 'auto';
+
+        this._from.set_text(from);
+        this._to.set_text(to);
     }
 
     _watchClipboard() {
@@ -260,6 +324,16 @@ class TcIndicator extends PanelMenu.Button {
     async _translate(text) {
         //this._cancellable.cancel();
         let cmd = [TRANS_CMD];
+        if (this._from.text != '' && this._from.text != 'auto')
+        {
+            cmd.push('-f');
+            cmd.push(this._from.text);
+        }
+        if (this._to.text != '' && this._to.text != 'auto')
+        {
+            cmd.push('-t');
+            cmd.push(this._to.text);
+        }
         if (this._briefMode)
             cmd.push('-b');
         if (!this._showOriginalPhonetics)

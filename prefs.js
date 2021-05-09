@@ -12,10 +12,12 @@ const _ = Gettext.domain('translate-clipboard').gettext;
 
 const SCHEMA_NAME = 'org.gnome.shell.extensions.translate-clipboard';
 
-const Fields = {
+var Fields = {
     ENABLE_TRANS: 'enable-trans',
     ENABLE_SELECTION: 'enable-selection',
     BRIEF_MODE: 'brief-mode',
+    FROM: 'from',
+    TO: 'to',
 };
 
 const getSchema = function () {
@@ -26,7 +28,7 @@ const getSchema = function () {
     return new Gio.Settings({ settings_schema: schema });
 };
 
-const SettingsSchema = getSchema();
+var SettingsSchema = getSchema();
 
 
 function init() {
