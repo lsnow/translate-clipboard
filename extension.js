@@ -138,9 +138,10 @@ class TcIndicator extends PanelMenu.Button {
 
         if (from != 'auto' && (isoLangs[from] == undefined))
         {
-            for (code in isoLangs)
+            for (let code in isoLangs)
             {
-                if (isoLangs[code].name.indexOf(from) || isoLangs[code].nativeName.indexOf(from))
+                if ((isoLangs[code].name.toLowerCase().indexOf(from.toLowerCase()) != -1) ||
+                    (isoLangs[code].nativeName.toLowerCase().indexOf(from.toLowerCase) != -1))
                 {
                     from = code;
                     break;
@@ -152,9 +153,10 @@ class TcIndicator extends PanelMenu.Button {
 
         if (to != 'auto' && (isoLangs[to] == undefined))
         {
-            for (code in isoLangs)
+            for (let code in isoLangs)
             {
-                if (isoLangs[code].name.indexOf(to) || isoLangs[code].nativeName.indexOf(to))
+                if ((isoLangs[code].name.toLowerCase().indexOf(to.toLowerCase()) != -1) ||
+                    (isoLangs[code].nativeName.toLowerCase().indexOf(to.toLowerCase()) != -1))
                 {
                     to = code;
                     break;
