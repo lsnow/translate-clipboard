@@ -20,7 +20,7 @@
 
 const GETTEXT_DOMAIN = 'translate-clipboard-extension';
 
-const { GLib, Gio, GObject, Clutter, St, Meta } = imports.gi;
+const { GLib, Gio, GObject, Pango, Clutter, St, Meta } = imports.gi;
 
 const Gettext = imports.gettext.domain(GETTEXT_DOMAIN);
 const _ = Gettext.gettext;
@@ -193,12 +193,13 @@ class TcIndicator extends PanelMenu.Button {
     _clipboardChanged() {
         this._clipboard.get_text(St.ClipboardType.PRIMARY,
             (clipboard, text) => {
-                if (text && text != '' && text != this._oldtext &&
+                if (text && text != '' &&
                     text[0] != '/' &&
-                    !RegExp(/.+?\..+/).exec(text) &&
+                    //RegExp(/\S+/).exec(text) &&
                     !Util.findUrls(text).length &&
-                    !RegExp(/\d+/).exec(text)) {
+                    !RegExp(/^[\.\s\d\-]+$/).exec(text)) {
                     this._oldtext = text;
+                    log(text);
                     [this._x, this._y] = global.get_pointer();
                     this._translate(text).then(res => {
                         this._notify(res);
@@ -221,6 +222,8 @@ class TcIndicator extends PanelMenu.Button {
                                            x_expand: true,
                                            y_expand: true });
             this._label = new St.Label();
+            this._label.clutter_text.set_line_wrap(true);
+            this._label.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
             this._box.add_child(this._label);
             Main.layoutManager.addChrome(this._box);
         }
@@ -230,10 +233,18 @@ class TcIndicator extends PanelMenu.Button {
         }
         this._label.clutter_text.set_markup(result);
         let monitor = Main.layoutManager.currentMonitor;
+        const { scale_factor: scaleFactor } = St.ThemeContext.get_for_stage(global.stage);
         if (x + this._box.get_width() > monitor.x + monitor.width)
+        {
+            if (this._box.get_width() > monitor.width)
+                this._box.set_style('max-width:' + monitor.width/scaleFactor/1.5 + 'px;');
             x = monitor.x + monitor.width - this._box.get_width();
+        }
+
         if (y + this._box.get_height() > monitor.y + monitor.height)
+        {
             y = monitor.y + monitor.height - this._box.get_height();
+        }
         this._box.set_position(x, y);
         this._box.show();
         this._updatePopupTimeout(5000);
