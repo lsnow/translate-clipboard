@@ -132,7 +132,7 @@ var isoLangs = {
     },
     "zh":{
         "name":"Chinese",
-        "nativeName":"中文 (Zhōngwén), 汉语, 漢語"
+        "nativeName":"中文 (Zhōngwén), 汉语, 漢語, 简体中"
     },
     /*
     "cv":{

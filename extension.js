@@ -100,6 +100,22 @@ class TcIndicator extends PanelMenu.Button {
         this.menu.addMenuItem(item1);
         this._briefModeItem = item1;
 
+		let settingsItem = new PopupMenu.PopupMenuItem('Settings');
+		this.menu.addMenuItem(settingsItem);
+
+		settingsItem.connect("activate", () => {
+            Gio.DBus.session.call(
+                                  'org.gnome.Shell.Extensions',
+                                  '/org/gnome/Shell/Extensions',
+                                  'org.gnome.Shell.Extensions',
+                                  'OpenExtensionPrefs',
+                                  new GLib.Variant('(ssa{sv})', [Me.metadata.uuid, '', {}]),
+                                  null,
+                                  Gio.DBusCallFlags.NONE,
+                                  -1,
+                                  null);
+        });
+
         this._settingsChangedId = this._settings.connect('changed', () => {
             this._settingsChanged();
         });
@@ -110,8 +126,8 @@ class TcIndicator extends PanelMenu.Button {
     destroy() {
         this._selection.disconnect(this._ownerChangedId);
         this._settings.disconnect(this._settingsChangedId);
-        if (this._box)
-            this._box.destroy();
+        if (this._scroll)
+            this._scroll.destroy();
          if (this._popupTimeoutId) {
              GLib.source_remove(this._popupTimeoutId);
              this._popupTimeoutId = 0;
@@ -215,17 +231,22 @@ class TcIndicator extends PanelMenu.Button {
         let [x, y] = global.get_pointer();
         */
         let [x, y] = [this._x, this._y];//global.get_pointer();
-        if (!this._box)
+        if (!this._scroll)
         {
+            this._scroll = new St.ScrollView({ style_class: "translate-scroll",
+                                              hscrollbar_policy: St.PolicyType.AUTOMATIC,
+                                              vscrollbar_policy: St.PolicyType.AUTOMATIC,
+            });
             this._box = new St.BoxLayout({ style_class: "translate-box",
                                            vertical: true,
                                            x_expand: true,
                                            y_expand: true });
+            this._scroll.add_actor(this._box);
             this._label = new St.Label();
             this._label.clutter_text.set_line_wrap(true);
             this._label.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
             this._box.add_child(this._label);
-            Main.layoutManager.addChrome(this._box);
+            Main.layoutManager.addChrome(this._scroll);
         }
         if (this._popupTimeoutId) {
             GLib.source_remove(this._popupTimeoutId);
@@ -234,26 +255,27 @@ class TcIndicator extends PanelMenu.Button {
         this._label.clutter_text.set_markup(result);
         let monitor = Main.layoutManager.currentMonitor;
         const { scale_factor: scaleFactor } = St.ThemeContext.get_for_stage(global.stage);
-        if (x + this._box.get_width() > monitor.x + monitor.width)
+        this._scroll.set_style(
+                               'max-height: %spx; max-width: %spx;'.format(monitor.height/scaleFactor/2,
+                                                                           monitor.width/scaleFactor/2));
+        if (x + this._scroll.get_width() > monitor.x + monitor.width)
         {
-            if (this._box.get_width() > monitor.width)
-                this._box.set_style('max-width:' + monitor.width/scaleFactor/1.5 + 'px;');
-            x = monitor.x + monitor.width - this._box.get_width();
+            y = monitor.x + monitor.width - this._scroll.get_width();
         }
 
-        if (y + this._box.get_height() > monitor.y + monitor.height)
+        if (y + 10 + this._scroll.get_height() > monitor.y + monitor.height)
         {
-            y = monitor.y + monitor.height - this._box.get_height();
+            y = monitor.y + monitor.height - this._scroll.get_height();
         }
-        this._box.set_position(x, y);
-        this._box.show();
+        this._scroll.set_position(x, y + 10);
+        this._scroll.show();
         this._updatePopupTimeout(5000);
     }
 
     _popupTimeout() {
         let [x, y] = global.get_pointer();
-        let [x_, y_] = this._box.get_transformed_position();
-        let [w_, h_] = this._box.get_transformed_size();
+        let [x_, y_] = this._scroll.get_transformed_position();
+        let [w_, h_] = this._scroll.get_transformed_size();
         if (x > x_ && y > y_ &&
             x < x_ + w_ && y < y_ + h_)
         {
@@ -261,7 +283,7 @@ class TcIndicator extends PanelMenu.Button {
             return;
         }
 
-        this._box.hide();
+        this._scroll.hide();
         this._label.clutter_text.set_markup('');
         this._popupTimeoutId = 0;
         return GLib.SOURCE_REMOVE;

@@ -37,18 +37,44 @@ function init() {
         Gettext.bindtextdomain('translate-clipboard', localeDir.get_path());
 }
 
-var TcPrefsWidget = new GObject.registerClass(class TcPrefsWidget extends Gtk.ListBox {
+var TcPrefsWidget = new GObject.registerClass(class TcPrefsWidget extends Gtk.Stack {
     _init() {
         super._init();
         this.margin = 20;
 
         this._settings = SettingsSchema;
+
+        let scroll = new Gtk.ScrolledWindow({valign: Gtk.Align.FILL,
+                                             halign: Gtk.Align.FILL,
+                                             vexpand: true,
+                                             hexpand: true
+        });
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+        this.add_child(scroll);
+
+        let viewport = new Gtk.Viewport();
+        scroll.set_child(viewport);
+
+        this._listbox = new Gtk.ListBox();
+        viewport.set_child(this._listbox);
+
         this._addSwitch({key : 'enable-trans',
                          label : _('Enable or disable translation'),
                          pos: 0});
         this._addSwitch({key : 'brief-mode',
                          label : _('Brief mode'),
                          pos: 1});
+
+        /* TODO
+        this._addKeybindingRow({label: _('Enable/Disable'),
+                                keys: 'Super + e',
+                                pos: 2
+        });
+        this._addKeybindingRow({label: _('Translate selected text'),
+                                keys: 'Super + t',
+                                pos: 3
+        });
+        */
     }
     _addSwitch(params){
         let row = new Gtk.ListBoxRow({
@@ -72,7 +98,47 @@ var TcPrefsWidget = new GObject.registerClass(class TcPrefsWidget extends Gtk.Li
         let sw = new Gtk.Switch({halign : Gtk.Align.END, valign : Gtk.Align.CENTER});
         grid.attach(sw, 1, 0, 1, 1);
         this._settings.bind(params.key, sw, 'active', Gio.SettingsBindFlags.DEFAULT);
-        this.insert(row, params.pos);
+        this._listbox.insert(row, params.pos);
+    }
+    _addKeybindingRow(params){
+        let row = new Gtk.ListBoxRow({
+            height_request: 36,
+            selectable: false,
+            activatable: true,
+            visible: true,
+        });
+
+        let hbox = new Gtk.Box({
+            spacing: 12,
+            margin_start: 20,
+            margin_end: 20,
+            margin_top: 8,
+            margin_bottom: 8,
+            visible: true,
+        });
+        row.set_child(hbox);
+
+        let lbl = new Gtk.Label({label: params.label,
+                                 halign: Gtk.Align.START,
+                                 valign: Gtk.Align.CENTER,
+                                 hexpand: true
+        });
+        hbox.append(lbl);
+        let keys = new Gtk.Label({label: params.keys,
+                                  halign : Gtk.Align.END,
+                                  valign : Gtk.Align.CENTER,
+        });
+        keys.get_style_context().add_class('dim-label');
+        hbox.append(keys);
+        this._listbox.insert(row, params.pos);
+
+        this._listbox.connect('row-activated', (row, r) => {
+            log('row-activated' + row + r);
+        });
+        /*
+        let accelString = Gtk.accelerator_name(key, mods);
+        SettingsSchema.set_strv(id, [accelString]);
+        */
     }
 });
 
