@@ -18,6 +18,7 @@ var Fields = {
     BRIEF_MODE: 'brief-mode',
     FROM: 'from',
     TO: 'to',
+    TRANS_SELECTED: 'translate-selected-text',
 };
 
 const getSchema = function () {
@@ -29,7 +30,6 @@ const getSchema = function () {
 };
 
 var SettingsSchema = getSchema();
-
 
 function init() {
     let localeDir = Extension.dir.get_child('locale');
@@ -65,15 +65,44 @@ var TcPrefsWidget = new GObject.registerClass(class TcPrefsWidget extends Gtk.St
                          label : _('Brief mode'),
                          pos: 1});
 
-        /* TODO
-        this._addKeybindingRow({label: _('Enable/Disable'),
-                                keys: 'Super + e',
-                                pos: 2
-        });
+        /* TODO */
         this._addKeybindingRow({label: _('Translate selected text'),
-                                keys: 'Super + t',
+                                keys: Fields.TRANS_SELECTED,
                                 pos: 3
         });
+        /*
+        let row = new Gtk.ListBoxRow({
+            height_request: 36,
+            selectable: false,
+            visible: true,
+        });
+        let command = "Change keybinding by edit schemas file:\n" +
+            "<b>" + SCHEMA_NAME + '.gschemas.xml</b>';
+        let lbl = new Gtk.Label({label: command,
+                                halign: Gtk.Align.START,
+                                valign: Gtk.Align.START,
+                                hexpand: true,
+                                wrap: true,
+        });
+        row.set_child(lbl);
+        this._listbox.insert(row, 4);
+
+        row = new Gtk.ListBoxRow({
+            height_request: 36,
+            selectable: false,
+            visible: true,
+        });
+        let schemaDir = Extension.dir.get_child('schemas').get_path();
+        command = 'And run:\n"<b>glib-compile-schemas ' + schemaDir + '</b>"';
+        lbl = new Gtk.Label({label: command,
+                            halign: Gtk.Align.START,
+                            valign: Gtk.Align.START,
+                            hexpand: true,
+                            wrap: true,
+                            use_markup: true,
+        });
+        row.set_child(lbl);
+        this._listbox.insert(row, 5);
         */
     }
     _addSwitch(params){
@@ -124,7 +153,10 @@ var TcPrefsWidget = new GObject.registerClass(class TcPrefsWidget extends Gtk.St
                                  hexpand: true
         });
         hbox.append(lbl);
-        let keys = new Gtk.Label({label: params.keys,
+        let key0 = this._settings.get_strv(params.keys)[0];
+        let [ok, key, mods] = Gtk.accelerator_parse(key0);
+        let accelString = ok ? Gtk.accelerator_name(key, mods) : "";
+        let keys = new Gtk.Label({label: accelString,
                                   halign : Gtk.Align.END,
                                   valign : Gtk.Align.CENTER,
         });
@@ -133,10 +165,8 @@ var TcPrefsWidget = new GObject.registerClass(class TcPrefsWidget extends Gtk.St
         this._listbox.insert(row, params.pos);
 
         this._listbox.connect('row-activated', (row, r) => {
-            log('row-activated' + row + r);
         });
         /*
-        let accelString = Gtk.accelerator_name(key, mods);
         SettingsSchema.set_strv(id, [accelString]);
         */
     }

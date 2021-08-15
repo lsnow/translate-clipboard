@@ -19,8 +19,7 @@
 /* exported init */
 
 const GETTEXT_DOMAIN = 'translate-clipboard-extension';
-
-const { GLib, Gio, GObject, Pango, Clutter, St, Meta } = imports.gi;
+const { GLib, Gio, GObject, Pango, Clutter, St, Meta, Shell } = imports.gi;
 
 const Gettext = imports.gettext.domain(GETTEXT_DOMAIN);
 const _ = Gettext.gettext;
@@ -100,6 +99,17 @@ class TcIndicator extends PanelMenu.Button {
         this.menu.addMenuItem(item1);
         this._briefModeItem = item1;
 
+        let keybind = new PopupMenu.PopupBaseMenuItem({reactive : false,
+                                                       can_focus : false});
+        keybind.add(new St.Label({text: "Translate selected",
+                                 x_align: Clutter.ActorAlign.START}));
+        let key0 = this._settings.get_strv(Prefs.Fields.TRANS_SELECTED)[0];
+        keybind.add(new St.Label({text: key0,
+                                 x_expand: true,
+                                 x_align: Clutter.ActorAlign.END}));
+
+        this.menu.addMenuItem(keybind);
+
 		let settingsItem = new PopupMenu.PopupMenuItem('Settings');
 		this.menu.addMenuItem(settingsItem);
 
@@ -124,6 +134,7 @@ class TcIndicator extends PanelMenu.Button {
     }
 
     destroy() {
+        this._removeKeybindings();
         this._selection.disconnect(this._ownerChangedId);
         this._settings.disconnect(this._settingsChangedId);
         if (this._scroll)
@@ -184,6 +195,26 @@ class TcIndicator extends PanelMenu.Button {
 
         this._from.set_text(from);
         this._to.set_text(to);
+        this._removeKeybindings();
+        this._setupKeybindings();
+    }
+
+    _removeKeybindings() {
+        Main.wm.removeKeybinding('translate-selected-text');
+    }
+
+    _setupKeybindings() {
+        Main.wm.addKeybinding('translate-selected-text',
+                              this._settings,
+                              Meta.KeyBindingFlags.IGNORE_AUTOREPEAT,
+                              Shell.ActionMode.NORMAL |
+                              Shell.ActionMode.POPUP,
+                              this._translateSelected.bind(this));
+    }
+
+    _translateSelected() {
+        let [x, y, mods] = global.get_pointer();
+        this._clipboardChanged();
     }
 
     _watchClipboard() {

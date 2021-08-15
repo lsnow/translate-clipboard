@@ -42,13 +42,12 @@
       </description>
     </key>
 
-    <key name="translate-from-selection" type="as">
-      <default><![CDATA[['<Super>T']]]></default>
-      <summary>Toggle the extension</summary>
+    <key name="translate-selected-text" type="as">
+      <default><![CDATA[['<Super>Y']]]></default>
+      <summary>Translate selected text even the extentiosn is disabled.</summary>
       <description>
         Key to toggle translate selected text
       </description>
     </key>
-
   </schema>
 </schemalist>
