@@ -16,6 +16,7 @@ var Fields = {
     ENABLE_TRANS: 'enable-trans',
     ENABLE_SELECTION: 'enable-selection',
     BRIEF_MODE: 'brief-mode',
+    AUTO_CLOSE: 'auto-close',
     FROM: 'from',
     TO: 'to',
     TRANS_SELECTED: 'translate-selected-text',
@@ -64,6 +65,9 @@ var TcPrefsWidget = new GObject.registerClass(class TcPrefsWidget extends Gtk.St
         this._addSwitch({key : 'brief-mode',
                          label : _('Brief mode'),
                          pos: 1});
+        this._addSwitch({key : 'auto-close',
+                         label : _('Auto hide'),
+                         pos: 2});
 
         /* TODO */
         this._addKeybindingRow({label: _('Translate selected text'),

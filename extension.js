@@ -19,7 +19,7 @@
 /* exported init */
 
 const GETTEXT_DOMAIN = 'translate-clipboard-extension';
-const { GLib, Gio, GObject, Pango, Clutter, St, Meta, Shell } = imports.gi;
+const { GLib, Gio, GObject, Pango, Clutter, Graphene, St, Meta, Shell } = imports.gi;
 
 const Gettext = imports.gettext.domain(GETTEXT_DOMAIN);
 const _ = Gettext.gettext;
@@ -49,6 +49,7 @@ class TcIndicator extends PanelMenu.Button {
         this._enabled = true;
         this._oldtext = null;
         this._showOriginalPhonetics = true;
+        this._autoClose = true;
 
         //this._cancellable = new Gio.Cancellable();
 
@@ -137,8 +138,8 @@ class TcIndicator extends PanelMenu.Button {
         this._removeKeybindings();
         this._selection.disconnect(this._ownerChangedId);
         this._settings.disconnect(this._settingsChangedId);
-        if (this._scroll)
-            this._scroll.destroy();
+        if (this._actor)
+            this._actor.destroy();
          if (this._popupTimeoutId) {
              GLib.source_remove(this._popupTimeoutId);
              this._popupTimeoutId = 0;
@@ -152,6 +153,7 @@ class TcIndicator extends PanelMenu.Button {
         this._briefModeItem.setToggleState(this._settings.get_boolean(Prefs.Fields.BRIEF_MODE));
         this._enabled = this._enableTransItem.state;
         this._briefMode = this._briefModeItem.state;
+        this._autoClose = this._settings.get_boolean(Prefs.Fields.AUTO_CLOSE);
 
         let from = this._settings.get_string(Prefs.Fields.FROM);
         let to = this._settings.get_string(Prefs.Fields.TO);
@@ -246,7 +248,6 @@ class TcIndicator extends PanelMenu.Button {
                     !Util.findUrls(text).length &&
                     !RegExp(/^[\.\s\d\-]+$/).exec(text)) {
                     this._oldtext = text;
-                    log(text);
                     [this._x, this._y] = global.get_pointer();
                     this._translate(text).then(res => {
                         this._notify(res);
@@ -262,22 +263,64 @@ class TcIndicator extends PanelMenu.Button {
         let [x, y] = global.get_pointer();
         */
         let [x, y] = [this._x, this._y];//global.get_pointer();
-        if (!this._scroll)
+        if (!this._actor)
         {
+            this._actor = new St.Widget();
             this._scroll = new St.ScrollView({ style_class: "translate-scroll",
                                               hscrollbar_policy: St.PolicyType.AUTOMATIC,
                                               vscrollbar_policy: St.PolicyType.AUTOMATIC,
             });
+            this._actor.add_child(this._scroll);
             this._box = new St.BoxLayout({ style_class: "translate-box",
                                            vertical: true,
                                            x_expand: true,
                                            y_expand: true });
             this._scroll.add_actor(this._box);
+
+            let closeIcon = new St.Icon({ icon_name: 'window-close-symbolic',
+                                        icon_size: 24 });
+            this._closeButton = new St.Button({
+                                              style_class: 'message-close-button',
+                                              child: closeIcon,
+            });
+            this._actor.add_child(this._closeButton);
+            this._closeButton.connect('clicked', this._close.bind(this));
+
             this._label = new St.Label();
             this._label.clutter_text.set_line_wrap(true);
             this._label.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
             this._box.add_child(this._label);
-            Main.layoutManager.addChrome(this._scroll);
+
+            this._closeButton.add_constraint(new Clutter.BindConstraint({
+                                                                        source: this._box,
+                                                                        coordinate: Clutter.BindCoordinate.POSITION,
+            }));
+            this._closeButton.add_constraint(new Clutter.AlignConstraint({
+                                                                         source: this._label,
+                                                                         align_axis: Clutter.AlignAxis.X_AXIS,
+                                                                         pivot_point: new Graphene.Point({ x: 0, y: -1 }),
+                                                                         factor: 0,
+            }));
+            /*
+            this._closeButton.add_constraint(new Clutter.AlignConstraint({
+                                                                         source: this._label,
+                                                                         align_axis: Clutter.AlignAxis.Y_AXIS,
+                                                                         pivot_point: new Graphene.Point({ x: -1, y: 0.5 }),
+                                                                         factor: 0,
+            }));
+            */
+
+            Main.layoutManager.addChrome(this._actor, {affectsInputRegion: true});
+        }
+        if (this._autoClose)
+        {
+            this._closeButton.hide();
+            this._box.reactive = false;
+        }
+        else
+        {
+            this._closeButton.show();
+            this._box.reactive = true;
         }
         if (this._popupTimeoutId) {
             GLib.source_remove(this._popupTimeoutId);
@@ -298,15 +341,21 @@ class TcIndicator extends PanelMenu.Button {
         {
             y = monitor.y + monitor.height - this._scroll.get_height();
         }
-        this._scroll.set_position(x, y + 10);
-        this._scroll.show();
-        this._updatePopupTimeout(5000);
+        this._actor.set_position(x, y + 10);
+        this._actor.show();
+        if (this._autoClose)
+            this._updatePopupTimeout(5000);
+    }
+
+    _close() {
+        this._actor.hide();
+        this._label.clutter_text.set_markup('');
     }
 
     _popupTimeout() {
         let [x, y] = global.get_pointer();
-        let [x_, y_] = this._scroll.get_transformed_position();
-        let [w_, h_] = this._scroll.get_transformed_size();
+        let [x_, y_] = this._actor.get_transformed_position();
+        let [w_, h_] = this._actor.get_transformed_size();
         if (x > x_ && y > y_ &&
             x < x_ + w_ && y < y_ + h_)
         {
@@ -314,7 +363,7 @@ class TcIndicator extends PanelMenu.Button {
             return;
         }
 
-        this._scroll.hide();
+        this._actor.hide();
         this._label.clutter_text.set_markup('');
         this._popupTimeoutId = 0;
         return GLib.SOURCE_REMOVE;

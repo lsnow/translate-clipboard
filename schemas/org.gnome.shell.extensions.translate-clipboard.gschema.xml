@@ -41,6 +41,13 @@
         Brief mode
       </description>
     </key>
+    <key name="auto-close" type="b">
+      <default>true</default>
+      <summary>Auto close</summary>
+      <description>
+        Auto close
+      </description>
+    </key>
 
     <key name="translate-selected-text" type="as">
       <default><![CDATA[['<Super>Y']]]></default>
