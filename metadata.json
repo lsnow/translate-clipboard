@@ -3,7 +3,9 @@
   "description": "translate clipboard text",
   "name": "translate-clipboard",
   "shell-version": [
-    "40"
+    "40",
+    "41.0",
+    "41"
   ],
   "url": "https://github.com/lsnow/translate-clipboard",
   "uuid": "translate-clipboard@lsnow.github.io",
