@@ -111,10 +111,10 @@ class TcIndicator extends PanelMenu.Button {
 
         this.menu.addMenuItem(keybind);
 
-		let settingsItem = new PopupMenu.PopupMenuItem('Settings');
-		this.menu.addMenuItem(settingsItem);
+        let settingsItem = new PopupMenu.PopupMenuItem('Settings');
+        this.menu.addMenuItem(settingsItem);
 
-		settingsItem.connect("activate", () => {
+        settingsItem.connect("activate", () => {
             Gio.DBus.session.call(
                                   'org.gnome.Shell.Extensions',
                                   '/org/gnome/Shell/Extensions',
@@ -283,14 +283,16 @@ class TcIndicator extends PanelMenu.Button {
                                               style_class: 'message-close-button',
                                               child: closeIcon,
             });
-            this._actor.add_child(this._closeButton);
+            //this._actor.add_child(this._closeButton);
             this._closeButton.connect('clicked', this._close.bind(this));
 
             this._label = new St.Label();
+            this._label.clutter_text.set_markup('test');
             this._label.clutter_text.set_line_wrap(true);
             this._label.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
             this._box.add_child(this._label);
 
+            /*
             this._closeButton.add_constraint(new Clutter.BindConstraint({
                                                                         source: this._box,
                                                                         coordinate: Clutter.BindCoordinate.POSITION,
@@ -299,13 +301,6 @@ class TcIndicator extends PanelMenu.Button {
                                                                          source: this._label,
                                                                          align_axis: Clutter.AlignAxis.X_AXIS,
                                                                          pivot_point: new Graphene.Point({ x: 0, y: -1 }),
-                                                                         factor: 0,
-            }));
-            /*
-            this._closeButton.add_constraint(new Clutter.AlignConstraint({
-                                                                         source: this._label,
-                                                                         align_axis: Clutter.AlignAxis.Y_AXIS,
-                                                                         pivot_point: new Graphene.Point({ x: -1, y: 0.5 }),
                                                                          factor: 0,
             }));
             */
@@ -349,7 +344,6 @@ class TcIndicator extends PanelMenu.Button {
 
     _close() {
         this._actor.hide();
-        this._label.clutter_text.set_markup('');
     }
 
     _popupTimeout() {
@@ -364,7 +358,6 @@ class TcIndicator extends PanelMenu.Button {
         }
 
         this._actor.hide();
-        this._label.clutter_text.set_markup('');
         this._popupTimeoutId = 0;
         return GLib.SOURCE_REMOVE;
     }
