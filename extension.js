@@ -111,10 +111,10 @@ class TcIndicator extends PanelMenu.Button {
 
         this.menu.addMenuItem(keybind);
 
-		let settingsItem = new PopupMenu.PopupMenuItem('Settings');
-		this.menu.addMenuItem(settingsItem);
+        let settingsItem = new PopupMenu.PopupMenuItem('Settings');
+        this.menu.addMenuItem(settingsItem);
 
-		settingsItem.connect("activate", () => {
+        settingsItem.connect("activate", () => {
             Gio.DBus.session.call(
                                   'org.gnome.Shell.Extensions',
                                   '/org/gnome/Shell/Extensions',
