@@ -3,7 +3,7 @@
   "description": "translate clipboard text",
   "name": "translate-clipboard",
   "shell-version": [
-    "36",
+    "3.36",
     "40",
     "41",
     "41.0"
