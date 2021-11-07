@@ -50,8 +50,10 @@ class TcIndicator extends PanelMenu.Button {
         this._oldtext = null;
         this._showOriginalPhonetics = true;
         this._autoClose = true;
+        this._engine = 'google';
+        this._dump = true;
 
-        //this._cancellable = new Gio.Cancellable();
+        this._locale = this._getLocale();
 
         this._icon = new St.Icon({
             style_class: 'system-status-icon',
@@ -256,12 +258,6 @@ class TcIndicator extends PanelMenu.Button {
             });
     }
     _notify(result) {
-        /*
-        let fields = JSON.parse(result);
-        source = fields['source'];
-        result = fields['translation'];
-        let [x, y] = global.get_pointer();
-        */
         let [x, y] = [this._x, this._y];//global.get_pointer();
         if (!this._actor)
         {
@@ -286,29 +282,16 @@ class TcIndicator extends PanelMenu.Button {
             this._actor.add_child(this._closeButton);
             this._closeButton.connect('clicked', this._close.bind(this));
 
-            this._label = new St.Label();
-            this._label.clutter_text.set_line_wrap(true);
-            this._label.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
-            this._box.add_child(this._label);
-
             this._closeButton.add_constraint(new Clutter.BindConstraint({
                                                                         source: this._box,
                                                                         coordinate: Clutter.BindCoordinate.POSITION,
             }));
             this._closeButton.add_constraint(new Clutter.AlignConstraint({
-                                                                         source: this._label,
+                                                                         source: this._box,
                                                                          align_axis: Clutter.AlignAxis.X_AXIS,
                                                                          pivot_point: new Graphene.Point({ x: 0, y: -1 }),
                                                                          factor: 0,
             }));
-            /*
-            this._closeButton.add_constraint(new Clutter.AlignConstraint({
-                                                                         source: this._label,
-                                                                         align_axis: Clutter.AlignAxis.Y_AXIS,
-                                                                         pivot_point: new Graphene.Point({ x: -1, y: 0.5 }),
-                                                                         factor: 0,
-            }));
-            */
 
             Main.layoutManager.addChrome(this._actor, {affectsInputRegion: true});
         }
@@ -326,30 +309,64 @@ class TcIndicator extends PanelMenu.Button {
             GLib.source_remove(this._popupTimeoutId);
             this._popupTimeoutId = 0;
         }
-        this._label.clutter_text.set_markup(result);
+        if (!this._dump) {
+            this._label = new St.Label();
+            this._label.clutter_text.set_line_wrap(true);
+            this._label.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+            this._box.add_child(this._label);
+            this._label.clutter_text.set_markup(result);
+        } else {
+            this._parseResult(result);
+        }
+
         let monitor = Main.layoutManager.currentMonitor;
         const { scale_factor: scaleFactor } = St.ThemeContext.get_for_stage(global.stage);
         this._scroll.set_style(
                                'max-height: %spx; max-width: %spx;'.format(monitor.height/scaleFactor/2,
                                                                            monitor.width/scaleFactor/2));
-        if (x + this._scroll.get_width() > monitor.x + monitor.width)
+        let natWidth = this._scroll.get_preferred_width(-1)[1];
+        if (x + natWidth > monitor.x + monitor.width)
         {
-            y = monitor.x + monitor.width - this._scroll.get_width();
+            y = monitor.x + monitor.width - natWidth;
         }
 
-        if (y + 10 + this._scroll.get_height() > monitor.y + monitor.height)
+        let natHeight = this._scroll.get_preferred_height(-1)[1];
+        if (y + 10 + natHeight > monitor.y + monitor.height)
         {
-            y = monitor.y + monitor.height - this._scroll.get_height();
+            y = monitor.y + monitor.height - natHeight;
         }
+
         this._actor.set_position(x, y + 10);
         this._actor.show();
         if (this._autoClose)
             this._updatePopupTimeout(5000);
     }
 
+    _getLocale () {
+        this.locale = GLib.get_language_names()[0];
+
+        if (this.locale == 'C')
+            this.locale = 'en';
+        else if (this.locale.indexOf('_') != -1)
+            this.locale = this.locale.split("_")[0];
+    }
+
+    _isRtl (code) {
+        var rtlCodes = ['ar', 'he', 'ps', 'fa', 'sd', 'ur', 'yi', 'ug'];
+        return rtlCodes.indexOf(code) != -1;
+    }
+
     _close() {
         this._actor.hide();
-        this._label.clutter_text.set_markup('');
+        if (this._label) {
+            this._label.destroy();
+            this._label = null;
+        }
+        if (this._resBox) {
+            //this._box.remove_child(this._resBox);
+            this._resBox.destroy();
+            this._resBox = null;
+        }
     }
 
     _popupTimeout() {
@@ -364,7 +381,14 @@ class TcIndicator extends PanelMenu.Button {
         }
 
         this._actor.hide();
-        this._label.clutter_text.set_markup('');
+        if (this._label) {
+            this._label.destroy();
+            this._label = null;
+        }
+        if (this._resBox) {
+            this._resBox.destroy();
+            this._resBox = null;
+        }
         this._popupTimeoutId = 0;
         return GLib.SOURCE_REMOVE;
     }
@@ -382,9 +406,120 @@ class TcIndicator extends PanelMenu.Button {
          }
      }
 
+    _createLabelWidget (str1, str2, rtl1, rtl2) {
+        let box = new St.BoxLayout({vertical: rtl1 || rtl2});
+        let label1 = new St.Label({text: str1 + ' : ',
+                                  style_class: 'tc-normal-label'
+        });
+        let label2 = new St.Label({text: str2,
+                                  style_class: 'tc-normal-label'
+        });
+        if (rtl1)
+            label1.add_style_pseudo_class('rtl');
+        if (rtl2)
+            label2.add_style_pseudo_class('rtl');
+        box.add_child(label1);
+        box.add_child(label2);
+
+        return box;
+    }
+
+    _parseResult (result) {
+        try {
+            let json = JSON.parse(result);
+
+            this._resBox = new St.BoxLayout({vertical: true,
+                                            style_class: 'tc-result-box'
+            });
+            this._box.add_child(this._resBox);
+
+            let t = json[0][0][0];
+            let t012 = json[0][1][2];
+            let t013 = json[0][1][3];
+            let l013 = new St.Label({text: json[0][0][1] + (t013 ? ' /' + t013 + '/' : ''),
+                                     style_class: 'tc-title-label'
+                                    });
+            l013.clutter_text.set_line_wrap(true);
+            l013.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+
+            let l012 = new St.Label({text: t + '\n(' + t012 + ')',
+                                     style_class: 'tc-title-label'
+                                    });
+            l012.clutter_text.set_line_wrap(true);
+            l012.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+
+            let rtl1 = this._isRtl(json[2]);
+            if (rtl1) {
+                l013.add_style_pseudo_class('rtl');
+            }
+            let to = this._to.get_text();
+            if (to == 'auto')
+                to = this._locale;
+            let rtl2 = this._isRtl(to);
+            if (rtl2) {
+                l012.add_style_pseudo_class('rtl');
+            }
+
+            let summary = new St.BoxLayout({vertical: true,
+                                           track_hover: true,
+                                           reactive: true,
+                                           style_class: 'tc-section-box'
+            });
+            summary.add_child(l013);
+            summary.add_child(l012);
+            this._resBox.add_child(summary);
+
+            //print(JSON.stringify(json));
+
+            if (this._briefMode)
+                return;
+
+            let t1 = json[1];
+            if (t1) {
+                for (let k in t1) {
+                    let t1k = t1[k];
+                    if (t1k)
+                    {
+                        //print('\n' + t1k[0]);
+                        let t1k0 = new St.Label({text: t1k[0],
+                                                style_class: 'tc-section-label'
+                        });
+                        this._resBox.add_child(t1k0);
+                        let ttn = t1k[2];
+                        for (let i in ttn) {
+                            let ttni0 = ttn[i][0];
+                            let ttni1 = '';
+                            for (let j in ttn[i][1]) {
+                                //print(ttn[i][1][j]);
+                                if (j == 0)
+                                    ttni1 += ttn[i][1][j];
+                                else
+                                    ttni1 += ', ' + ttn[i][1][j];
+                            }
+                            //print(ttni);
+                            let ttniLabel = this._createLabelWidget(ttni0, ttni1, rtl2, rtl1);
+                            this._resBox.add_child(ttniLabel);
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            global.log(e.toString());
+        }
+    }
+
     _escape_translation(str) {
         if (!str) {
             return '';
+        }
+        if (this._dump)
+        {
+            let i = str.indexOf('[');
+            let j = str.lastIndexOf(']');
+            if (i == -1 || j == -1)
+                return str;
+            str = str.slice(i - 1, j + 1);
+            return str;
         }
 
         let stuff = {
@@ -455,6 +590,8 @@ class TcIndicator extends PanelMenu.Button {
             cmd.push('-show-original-phonetics n')
 
         cmd.push('-no-browser');
+        if (this._dump)
+            cmd.push('-dump');
         cmd.push(text);
         return this._exec(cmd);
     }

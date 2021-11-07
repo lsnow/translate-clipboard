@@ -5,5 +5,31 @@
     color: #fff;
 }
 .translate-box {
-    padding: 20px 32px 0 32px;
+    padding: 16px 5px 0 16px;
+}
+
+.tc-title-label {
+    font-weight: bold;
+}
+.tc-section-box {
+    padding: 3px 10px 5px 10px;
+    background-color: rgba(96, 96, 96, 1);
+    border-radius: 5px;
+}
+.tc-section-box:hover {
+    background-color: rgba(125, 125, 125, 1);
+}
+
+.tc-title-label:rtl,
+.tc-section-label:rtl,
+.tc-normal-label:rtl {
+    text-align: right;
+}
+
+.tc-section-label {
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.tc-normal-label {
 }

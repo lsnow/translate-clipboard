@@ -4,10 +4,10 @@
   "name": "translate-clipboard",
   "shell-version": [
     "40",
-    "41.0",
-    "41"
+    "41",
+    "41.0"
   ],
   "url": "https://github.com/lsnow/translate-clipboard",
   "uuid": "translate-clipboard@lsnow.github.io",
-  "version": 8
+  "version": 10
 }
