@@ -10,13 +10,18 @@
 
 .tc-title-label {
     font-weight: bold;
+    padding: 5px;
 }
+
 .tc-section-box {
-    padding: 3px 10px 5px 10px;
+    padding: 3px 0px 5px 0px;
+    /*
     background-color: rgba(96, 96, 96, 1);
     border-radius: 5px;
+    */
 }
-.tc-section-box:hover {
+.tc-section-box:hover,
+.tc-title-label:hover {
     background-color: rgba(125, 125, 125, 1);
 }
 

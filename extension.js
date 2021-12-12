@@ -19,6 +19,7 @@
 /* exported init */
 
 const GETTEXT_DOMAIN = 'translate-clipboard-extension';
+
 const { GLib, Gio, GObject, Pango, Clutter, Graphene, St, Meta, Shell } = imports.gi;
 
 const Gettext = imports.gettext.domain(GETTEXT_DOMAIN);
@@ -34,6 +35,7 @@ const Util = imports.misc.util;
 
 const Prefs = Me.imports.prefs;
 const Languages = Me.imports.languages;
+const AzureTTS = Me.imports.tts;
 
 /* crow-translation */
 /*
@@ -134,6 +136,7 @@ class TcIndicator extends PanelMenu.Button {
         });
         this._settingsChanged();
         this._watchClipboard();
+        this._tts = new AzureTTS.AzureTTS(null);
     }
 
     destroy() {
@@ -437,16 +440,26 @@ class TcIndicator extends PanelMenu.Button {
             let t012 = json[0][1][2];
             let t013 = json[0][1][3];
             let l013 = new St.Label({text: json[0][0][1] + (t013 ? ' /' + t013 + '/' : ''),
-                                     style_class: 'tc-title-label'
+                                     style_class: 'tc-title-label',
+                                     track_hover: true,
+                                     reactive: true,
                                     });
             l013.clutter_text.set_line_wrap(true);
             l013.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+            l013.connect('button-press-event', () => {
+                this._tts.playAudio(json[0][0][1]);
+            });
 
             let l012 = new St.Label({text: t + '\n(' + t012 + ')',
-                                     style_class: 'tc-title-label'
+                                     style_class: 'tc-title-label',
+                                     track_hover: true,
+                                     reactive: true,
                                     });
             l012.clutter_text.set_line_wrap(true);
             l012.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+            l012.connect('button-press-event', () => {
+                this._tts.playAudio(t);
+            });
 
             let rtl1 = this._isRtl(json[2]);
             if (rtl1) {
@@ -461,7 +474,7 @@ class TcIndicator extends PanelMenu.Button {
             }
 
             let summary = new St.BoxLayout({vertical: true,
-                                           track_hover: true,
+                                           track_hover: false,
                                            reactive: true,
                                            style_class: 'tc-section-box'
             });
