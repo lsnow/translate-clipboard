@@ -145,10 +145,12 @@ class TcIndicator extends PanelMenu.Button {
         this._settings.disconnect(this._settingsChangedId);
         if (this._actor)
             this._actor.destroy();
-         if (this._popupTimeoutId) {
-             GLib.source_remove(this._popupTimeoutId);
-             this._popupTimeoutId = 0;
-         }
+        if (this._popupTimeoutId) {
+            GLib.source_remove(this._popupTimeoutId);
+            this._popupTimeoutId = 0;
+        }
+        this._tts.cleanup();
+
         super.destroy();
     }
 

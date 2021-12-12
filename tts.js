@@ -209,8 +209,9 @@ class AzureTTS extends GObject.Object {
 
     cleanup() {
         this._stopPlayAudio();
+        this._pipeline.set_state(Gst.State.NULL);
         this._pipeline.run_dispose();
-        Gst.deinit();
+        //Gst.deinit();
     }
 }
 );
