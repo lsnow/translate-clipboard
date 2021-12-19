@@ -54,6 +54,7 @@ class TcIndicator extends PanelMenu.Button {
         this._autoClose = true;
         this._engine = 'google';
         this._dump = true;
+        this._ttsEngine = 'Microsoft Server Speech Text to Speech Voice (zh-CN, XiaoXiaoNeural)';
 
         this._locale = this._getLocale();
 
@@ -134,9 +135,9 @@ class TcIndicator extends PanelMenu.Button {
         this._settingsChangedId = this._settings.connect('changed', () => {
             this._settingsChanged();
         });
+        this._tts = new AzureTTS.AzureTTS(null);
         this._settingsChanged();
         this._watchClipboard();
-        this._tts = new AzureTTS.AzureTTS(null);
     }
 
     destroy() {
@@ -206,6 +207,8 @@ class TcIndicator extends PanelMenu.Button {
         this._to.set_text(to);
         this._removeKeybindings();
         this._setupKeybindings();
+        this._ttsEngine = this._settings.get_string(Prefs.Fields.TTS_ENGINE);
+        this._tts.engine = this._ttsEngine;
     }
 
     _removeKeybindings() {

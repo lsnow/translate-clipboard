@@ -4,8 +4,9 @@ const GObject = imports.gi.GObject;
 const Gio = imports.gi.Gio;
 imports.gi.versions.Gtk = '4.0'
 const Gtk = imports.gi.Gtk;
-const Lang = imports.lang;
 const Extension = imports.misc.extensionUtils.getCurrentExtension();
+
+const Voices = Extension.imports.voices;
 
 const Gettext = imports.gettext;
 const _ = Gettext.domain('translate-clipboard').gettext;
@@ -20,6 +21,7 @@ var Fields = {
     FROM: 'from',
     TO: 'to',
     TRANS_SELECTED: 'translate-selected-text',
+    TTS_ENGINE: 'voice'
 };
 
 const getSchema = function () {
@@ -74,40 +76,8 @@ var TcPrefsWidget = new GObject.registerClass(class TcPrefsWidget extends Gtk.St
                                 keys: Fields.TRANS_SELECTED,
                                 pos: 3
         });
-        /*
-        let row = new Gtk.ListBoxRow({
-            height_request: 36,
-            selectable: false,
-            visible: true,
-        });
-        let command = "Change keybinding by edit schemas file:\n" +
-            "<b>" + SCHEMA_NAME + '.gschemas.xml</b>';
-        let lbl = new Gtk.Label({label: command,
-                                halign: Gtk.Align.START,
-                                valign: Gtk.Align.START,
-                                hexpand: true,
-                                wrap: true,
-        });
-        row.set_child(lbl);
-        this._listbox.insert(row, 4);
 
-        row = new Gtk.ListBoxRow({
-            height_request: 36,
-            selectable: false,
-            visible: true,
-        });
-        let schemaDir = Extension.dir.get_child('schemas').get_path();
-        command = 'And run:\n"<b>glib-compile-schemas ' + schemaDir + '</b>"';
-        lbl = new Gtk.Label({label: command,
-                            halign: Gtk.Align.START,
-                            valign: Gtk.Align.START,
-                            hexpand: true,
-                            wrap: true,
-                            use_markup: true,
-        });
-        row.set_child(lbl);
-        this._listbox.insert(row, 5);
-        */
+        this._addVoicesRow();
     }
     _addSwitch(params){
         let row = new Gtk.ListBoxRow({
@@ -173,6 +143,109 @@ var TcPrefsWidget = new GObject.registerClass(class TcPrefsWidget extends Gtk.St
         /*
         SettingsSchema.set_strv(id, [accelString]);
         */
+    }
+    _addVoicesRow(){
+        let row = new Gtk.ListBoxRow({
+            height_request: 36,
+            selectable: false,
+            activatable: true,
+            visible: true,
+        });
+
+        let hbox = new Gtk.Box({
+            spacing: 12,
+            margin_start: 20,
+            margin_end: 20,
+            margin_top: 8,
+            margin_bottom: 8,
+            visible: true,
+        });
+        row.set_child(hbox);
+
+        let lbl = new Gtk.Label({label: _('TTS Voice'),
+                                 halign: Gtk.Align.START,
+                                 valign: Gtk.Align.CENTER,
+                                 hexpand: true
+        });
+        hbox.append(lbl);
+        let voice = new Gtk.Label({label: '',
+                                  halign : Gtk.Align.END,
+                                  valign : Gtk.Align.CENTER,
+        });
+        //this._settings.bind('voice', voice, 'label', Gio.SettingsBindFlags.DEFAULT);
+        this._settings.connect('changed::voice', (settings, key) => {
+            let voices = Voices.voices;
+            for (let v in voices) {
+                if (voices[v].Name == settings.get_string(key)) {
+                    let friendName = this._getShortName(voices[v].FriendlyName);
+                    voice.set_label(friendName);
+                }
+            }
+        });
+        let voices = Voices.voices;
+        let voiceName = this._settings.get_string('voice');
+        for (let v in voices) {
+            if (voices[v].Name == voiceName) {
+                let friendName = this._getShortName(voices[v].FriendlyName);
+                voice.set_label(friendName);
+                break;
+            }
+        }
+        hbox.append(voice);
+        this._listbox.insert(row, 4);
+
+        this._listbox.connect('row-activated', (box, row) => {
+            this._buildPopover(row);
+            this._popover.popup();
+        });
+    }
+
+    _getShortName(name){
+        let shortName = name.replace('Microsoft ', '');
+        shortName = shortName.replace(' Online', '');
+        return shortName;
+    }
+
+    _buildPopover(row){
+        if (this._popover)
+            return;
+        let scroll = new Gtk.ScrolledWindow({valign: Gtk.Align.FILL,
+                                             halign: Gtk.Align.FILL,
+                                             vexpand: true,
+                                             hexpand: true,
+                                             propagate_natural_height: true
+        });
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+
+        let popover = new Gtk.Popover();
+        let listbox = new Gtk.ListBox();
+        scroll.set_child(listbox);
+        popover.set_child(scroll);
+        popover.set_parent(row);
+        this._popover = popover;
+
+        let voices = Voices.voices;
+        for (let v in voices) {
+            let row = new Gtk.ListBoxRow({
+                                         height_request: 24,
+                                         selectable: true,
+                                         activatable: true,
+                                         visible: true,
+            });
+            let lbl = new Gtk.Label({label: this._getShortName(voices[v].FriendlyName),
+                                    halign: Gtk.Align.START,
+                                    valign: Gtk.Align.CENTER,
+                                    hexpand: true
+            });
+            row._voice = voices[v].Name;
+            row.set_child(lbl);
+            listbox.insert(row, -1);
+        }
+        listbox.connect('row-activated', (box, row) => {
+            print(row._voice);
+            this._settings.set_string('voice', row._voice);
+            popover.hide();
+        });
     }
 });
 

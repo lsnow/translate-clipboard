@@ -23,8 +23,8 @@ class AzureTTS extends GObject.Object {
             codec: 'audio-24khz-48kbitrate-mono-mp3',
         });
 
-        this._engine = params.engine;
-        this._codec = params.codec;
+        this.engine = params.engine;
+        this.codec = params.codec;
 
         Gst.init(null);
         this._pipeline = Gst.parse_launch('appsrc name=src ! mpegaudioparse ! mpg123audiodec ! audioconvert ! autoaudiosink');
@@ -69,14 +69,14 @@ class AzureTTS extends GObject.Object {
         let msg = 'Content-Type:application/json; charset=utf-8\r\n\r\nPath:speech.config\r\n\r\n'
             + '{"context":{"synthesis":{"audio":{"metadataoptions":'
             + '{"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"true"},"outputFormat":"'
-            + this._codec
+            + this.codec
             + '"}}}}\r\n';
         this.websocket.send_text(msg);
 
         msg = "X-RequestId:fe83fbefb15c7739fe674d9f3e81d38f\r\n"
             + "Content-Type:application/ssml+xml\r\nPath:ssml\r\n\r\n"
             + "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice  name='"
-            + this._engine
+            + this.engine
             + "'><prosody pitch='+0Hz' rate ='+0%' volume='+0%'>"
             + text
             + "</prosody></voice></speak>\r\n";

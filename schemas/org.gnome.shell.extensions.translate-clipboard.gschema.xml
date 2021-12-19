@@ -56,5 +56,13 @@
         Key to toggle translate selected text
       </description>
     </key>
+
+    <key name="voice" type="s">
+      <default>'Microsoft Server Speech Text to Speech Voice (zh-CN, XiaoXiaoNeural)'</default>
+      <summary>TTS engine</summary>
+      <description>
+          TTS engine.
+      </description>
+    </key>
   </schema>
 </schemalist>
