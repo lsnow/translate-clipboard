@@ -194,7 +194,10 @@ var TcPrefsWidget = new GObject.registerClass(class TcPrefsWidget extends Gtk.St
         hbox.append(voice);
         this._listbox.insert(row, 4);
 
-        this._listbox.connect('row-activated', (box, row) => {
+        this._listbox.connect('row-activated', (box, _row) => {
+            if (row != _row) {
+                return;
+            }
             this._buildPopover(row);
             this._popover.popup();
         });
