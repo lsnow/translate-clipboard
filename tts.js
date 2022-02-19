@@ -25,11 +25,6 @@ class AzureTTS extends GObject.Object {
 
         this.engine = params.engine;
         this.codec = params.codec;
-
-        Gst.init(null);
-        this._pipeline = Gst.parse_launch('appsrc name=src ! mpegaudioparse ! mpg123audiodec ! audioconvert ! autoaudiosink');
-        this._appsrc = this._pipeline.get_by_name('src');
-        this._playerState = Gst.State.NULL;
     }
 
     _play(text) {
@@ -201,7 +196,14 @@ class AzureTTS extends GObject.Object {
     playAudio(text) {
         this._text = text;
         if (text == null)
-            this._text = '妙手写徽真，水剪双眸点绛唇。疑是昔年窥宋玉，东邻，只露墙头一半身';
+            this._text = 'TTS test';
+
+        if (!this._pipeline) {
+            Gst.init(null);
+            this._pipeline = Gst.parse_launch('appsrc name=src ! mpegaudioparse ! mpg123audiodec ! audioconvert ! autoaudiosink');
+            this._appsrc = this._pipeline.get_by_name('src');
+            this._playerState = Gst.State.NULL;
+        }
 
         this._stopPlayAudio();
         this._play(this._text);
