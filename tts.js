@@ -200,7 +200,7 @@ class AzureTTS extends GObject.Object {
 
         if (!this._pipeline) {
             Gst.init(null);
-            this._pipeline = Gst.parse_launch('appsrc name=src ! mpegaudioparse ! mpg123audiodec ! audioconvert ! autoaudiosink');
+            this._pipeline = Gst.parse_launch('appsrc name=src ! mpegaudioparse ! mpg123audiodec ! audioconvert ! pulsesink');
             this._appsrc = this._pipeline.get_by_name('src');
             this._playerState = Gst.State.NULL;
         }
