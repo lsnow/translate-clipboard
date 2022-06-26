@@ -441,10 +441,28 @@ class TcIndicator extends PanelMenu.Button {
             });
             this._box.add_child(this._resBox);
 
-            let t = json[0][0][0];
+            let t = '';
+            let f = '';
             let t012 = json[0][1][2];
             let t013 = json[0][1][3];
-            let l013 = new St.Label({text: json[0][0][1] + (t013 ? ' /' + t013 + '/' : ''),
+            for (let k in json[0]) {
+                let tk = json[0][k];
+                if (tk[1])
+                {
+                    let tk1 = tk[1].replace(/\n/g, '');
+                    if (k > 0)
+                        f += '\n';
+                    f += tk1;
+                }
+                if (tk[0])
+                {
+                    let tk0 = tk[0].replace(/\n/g, '');
+                    if (k > 0)
+                        t += '\n';
+                    t += tk0;
+                }
+            }
+            let l013 = new St.Label({text: f + (t013 ? ' /' + t013 + '/' : ''),
                                      style_class: 'tc-title-label',
                                      track_hover: true,
                                      reactive: true,
@@ -452,7 +470,7 @@ class TcIndicator extends PanelMenu.Button {
             l013.clutter_text.set_line_wrap(true);
             l013.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
             l013.connect('button-press-event', () => {
-                this._tts.playAudio(json[0][0][1]);
+                this._tts.playAudio(f);
             });
 
             let l012 = new St.Label({text: t + '\n(' + t012 + ')',
