@@ -64,5 +64,14 @@
           TTS engine.
       </description>
     </key>
+
+    <key name="proxy" type="s">
+      <default>''</default>
+      <summary>Proxy</summary>
+      <description>
+        Proxy used for curl. [protocol://]host[:port].
+        For socks5: socks5h://127.0.0.1:9999.
+      </description>
+    </key>
   </schema>
 </schemalist>

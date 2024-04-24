@@ -55,6 +55,7 @@ class TcIndicator extends PanelMenu.Button {
         this._engine = 'google';
         this._dump = true;
         this._ttsEngine = 'Microsoft Server Speech Text to Speech Voice (zh-CN, XiaoXiaoNeural)';
+        this._proxy = '';
 
         this._locale = this._getLocale();
 
@@ -121,9 +122,9 @@ class TcIndicator extends PanelMenu.Button {
 
         settingsItem.connect("activate", () => {
             Gio.DBus.session.call(
-                                  'org.gnome.Shell.Extensions',
-                                  '/org/gnome/Shell/Extensions',
-                                  'org.gnome.Shell.Extensions',
+                                  'org.gnome.Shell.Extensions', // bus name
+                                  '/org/gnome/Shell/Extensions', // path
+                                  'org.gnome.Shell.Extensions', // interface
                                   'OpenExtensionPrefs',
                                   new GLib.Variant('(ssa{sv})', [Me.metadata.uuid, '', {}]),
                                   null,
@@ -209,6 +210,7 @@ class TcIndicator extends PanelMenu.Button {
         this._setupKeybindings();
         this._ttsEngine = this._settings.get_string(Prefs.Fields.TTS_ENGINE);
         this._tts.engine = this._ttsEngine;
+        this._proxy = this._settings.get_string(Prefs.Fields.PROXY);
     }
 
     _removeKeybindings() {
@@ -433,6 +435,11 @@ class TcIndicator extends PanelMenu.Button {
     }
 
     _parseResult (result) {
+        if (this._resBox) {
+            //this._box.remove_child(this._resBox);
+            this._resBox.destroy();
+            this._resBox = null;
+        }
         try {
             let json = JSON.parse(result);
 
@@ -554,7 +561,7 @@ class TcIndicator extends PanelMenu.Button {
             let j = str.lastIndexOf(']');
             if (i == -1 || j == -1)
                 return str;
-            str = str.slice(i - 1, j + 1);
+            str = str.slice(i, j + 1);
             return str;
         }
 
@@ -610,6 +617,11 @@ class TcIndicator extends PanelMenu.Button {
     async _translate(text) {
         //this._cancellable.cancel();
         let cmd = [TRANS_CMD];
+        if (this._proxy != '')
+        {
+            cmd.push('-x');
+            cmd.push(this._proxy);
+        }
         if (this._from.text != '' && this._from.text != 'auto')
         {
             cmd.push('-f');

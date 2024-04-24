@@ -21,7 +21,8 @@ var Fields = {
     FROM: 'from',
     TO: 'to',
     TRANS_SELECTED: 'translate-selected-text',
-    TTS_ENGINE: 'voice'
+    TTS_ENGINE: 'voice',
+    PROXY: 'proxy'
 };
 
 const getSchema = function () {
@@ -78,6 +79,7 @@ var TcPrefsWidget = new GObject.registerClass(class TcPrefsWidget extends Gtk.St
         });
 
         this._addVoicesRow();
+        this._addProxyRow();
     }
     _addSwitch(params){
         let row = new Gtk.ListBoxRow({
@@ -201,6 +203,41 @@ var TcPrefsWidget = new GObject.registerClass(class TcPrefsWidget extends Gtk.St
             this._buildPopover(row);
             this._popover.popup();
         });
+    }
+
+    _addProxyRow(){
+        let row = new Gtk.ListBoxRow({
+            height_request: 36,
+            selectable: false,
+            activatable: false,
+            visible: true,
+        });
+
+        let hbox = new Gtk.Box({
+            spacing: 12,
+            margin_start: 20,
+            margin_end: 20,
+            margin_top: 8,
+            margin_bottom: 8,
+            visible: true,
+        });
+        row.set_child(hbox);
+
+        let lbl = new Gtk.Label({label: _('Proxy'),
+                                 halign: Gtk.Align.START,
+                                 valign: Gtk.Align.CENTER,
+                                 hexpand: true
+        });
+        hbox.append(lbl);
+        let proxy = new Gtk.Entry({text: '',
+                                  placeholder_text: 'protocol://host:port',
+                                  halign : Gtk.Align.END,
+                                  valign : Gtk.Align.CENTER,
+                                  width_chars: 25
+        });
+        hbox.append(proxy);
+        this._listbox.insert(row, 4);
+        this._settings.bind('proxy', proxy, 'text', Gio.SettingsBindFlags.DEFAULT);
     }
 
     _getShortName(name){
