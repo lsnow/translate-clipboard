@@ -6,22 +6,25 @@ imports.gi.versions.Soup = '2.4';
 const { GLib, Gio, GObject, Soup, Gst, GstApp } = imports.gi;
 const ByteArray = imports.byteArray;
 const Params = imports.misc.params;
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+//const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 // Azure Speech API
 const trustedClientToken = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
 const wsUrl = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken='+trustedClientToken;
 const engineListUrl = 'https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voice/list?TrustedClientToken='+trustedClientToken;
 
+let debug_tts = false;
 let writeToFile = false;
 
 var AzureTTS = GObject.registerClass(
 class AzureTTS extends GObject.Object {
     _init(params) {
-        params = Params.parse(params, {
-            engine: 'Microsoft Server Speech Text to Speech Voice (zh-CN, XiaoXiaoNeural)',
-            codec: 'audio-24khz-48kbitrate-mono-mp3',
-        });
+        if (debug_tts == false) {
+            params = Params.parse(params, {
+                engine: 'Microsoft Server Speech Text to Speech Voice (zh-CN, XiaoXiaoNeural)',
+                codec: 'audio-24khz-48kbitrate-mono-mp3',
+            });
+        }
 
         this.engine = params.engine;
         this.codec = params.codec;
@@ -61,15 +64,20 @@ class AzureTTS extends GObject.Object {
     }
 
     _sendText(text) {
-        let msg = 'Content-Type:application/json; charset=utf-8\r\n\r\nPath:speech.config\r\n\r\n'
+        let date = new Date().toString();
+        let msg = 'X-Timestamp:' + date
+            + '\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n'
             + '{"context":{"synthesis":{"audio":{"metadataoptions":'
             + '{"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"true"},"outputFormat":"'
             + this.codec
             + '"}}}}\r\n';
         this.websocket.send_text(msg);
 
-        msg = "X-RequestId:fe83fbefb15c7739fe674d9f3e81d38f\r\n"
-            + "Content-Type:application/ssml+xml\r\nPath:ssml\r\n\r\n"
+        let connectId = GLib.uuid_string_random().replaceAll('-', '');
+        msg = "X-RequestId:" + connectId + "\r\n"
+            + "Content-Type:application/ssml+xml\r\n"
+            + "X-Timestamp:" + date + "Z\r\n"
+            + "Path:ssml\r\n\r\n"
             + "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice  name='"
             + this.engine
             + "'><prosody pitch='+0Hz' rate ='+0%' volume='+0%'>"
@@ -222,14 +230,13 @@ class AzureTTS extends GObject.Object {
 /*
 let params = {
     engine: 'Microsoft Server Speech Text to Speech Voice (zh-CN, XiaoXiaoNeural)',
+    //engine: 'zh-CN-XiaoXiaoNeural',
     codec: 'audio-24khz-48kbitrate-mono-mp3',
 };
 
 let loop = GLib.MainLoop.new(null, false);
 var test = new AzureTTS (params);
-//test.playAudio('乘彼白云，至于帝乡。');
-test.playAudio(null);
-loop.run();
-
+test.playAudio('乘彼白云，至于帝乡。');
+//test.playAudio(null);
 loop.run();
 */
