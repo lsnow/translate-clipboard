@@ -1,0 +1,7 @@
+.combo {
+    min-width: 200px;
+}
+
+.combo .suffixes .view label{
+    min-width: 220px;
+}

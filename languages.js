@@ -3,7 +3,7 @@
  * @author Phil Teare
  * using wikipedia data
  */
-var isoLangs = {
+export var isoLangs = {
     /*
     "ab":{
         "name":"Abkhaz",

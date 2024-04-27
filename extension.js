@@ -18,35 +18,41 @@
 
 /* exported init */
 
+import GObject from 'gi://GObject';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import Pango from 'gi://Pango';
+import Clutter from 'gi://Clutter';
+import Graphene from 'gi://Graphene';
+import St from 'gi://St';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
+
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+
+import {Button} from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import * as Util from 'resource:///org/gnome/shell/misc/util.js';
+
+import * as Utils from './utils.js';
+import * as Languages from './languages.js';
+import {AzureTTS} from './tts.js';
+
 const GETTEXT_DOMAIN = 'translate-clipboard-extension';
+const IndicatorName = 'Translate Clipboard';
 
-const { GLib, Gio, GObject, Pango, Clutter, Graphene, St, Meta, Shell } = imports.gi;
-
-const Gettext = imports.gettext.domain(GETTEXT_DOMAIN);
-const _ = Gettext.gettext;
-
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const Main = imports.ui.main;
-const PanelMenu = imports.ui.panelMenu;
-const PopupMenu = imports.ui.popupMenu;
-const MessageTray = imports.ui.messageTray;
-const Util = imports.misc.util;
-
-const Prefs = Me.imports.prefs;
-const Languages = Me.imports.languages;
-const AzureTTS = Me.imports.tts;
-
-/* crow-translation */
-/*
-const TRANS_CMD = "crow";
-*/
-const TRANS_CMD = Me.path + '/trans';
+let tcIndicator = null;
 
 const TcIndicator = GObject.registerClass(
-class TcIndicator extends PanelMenu.Button {
-    _init() {
-        super._init(0.0, _('Translate Clipboard'));
+class TcIndicator extends Button {
+    _init(ext) {
+        super._init(0.0, IndicatorName, false);
+
+        this._extension = ext;
+        this._trans_cmd = ext.path + '/trans';
 
         this._enabled = true;
         this._oldtext = null;
@@ -62,12 +68,13 @@ class TcIndicator extends PanelMenu.Button {
         this._icon = new St.Icon({
             style_class: 'system-status-icon',
         });
-        this._icon.gicon = Gio.icon_new_for_string(`${Me.path}/icons/translator-symbolic.svg`);
+        this._icon.gicon = Gio.icon_new_for_string(`${this._extension.path}/icons/translator-symbolic.svg`);
         let box = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
         box.add_child(this._icon);
         this.add_child(box);
 
-        this._settings = Prefs.SettingsSchema;
+        //this._settings = Prefs.SettingsSchema;
+        this._settings = this._extension.getSettings();
 
         let codes = new PopupMenu.PopupBaseMenuItem({reactive : false,
                                                      can_focus : false});
@@ -79,21 +86,21 @@ class TcIndicator extends PanelMenu.Button {
                                x_expand: true,
                                x_align: Clutter.ActorAlign.CENTER,
                                y_align: Clutter.ActorAlign.CENTER});
-        codes.add(this._from);
-        codes.add(l);
-        codes.add(this._to);
+        codes.add_child(this._from);
+        codes.add_child(l);
+        codes.add_child(this._to);
         this.menu.addMenuItem(codes);
         this._from.clutter_text.connect('key-focus-out', ()=> {
-            this._settings.set_string(Prefs.Fields.FROM, this._from.text);
+            this._settings.set_string(Utils.Fields.FROM, this._from.text);
         });
         this._to.clutter_text.connect('key-focus-out', ()=> {
-            this._settings.set_string(Prefs.Fields.TO, this._to.text);
+            this._settings.set_string(Utils.Fields.TO, this._to.text);
         });
 
         let item = new PopupMenu.PopupSwitchMenuItem(_('Toggle translate'), true, null);
         item.connect('toggled', () => {
             this._enabled = item.state;
-            this._settings.set_boolean(Prefs.Fields.ENABLE_TRANS, this._enabled);
+            this._settings.set_boolean(Utils.Fields.ENABLE_TRANS, this._enabled);
         });
         this.menu.addMenuItem(item);
         this._enableTransItem = item;
@@ -101,42 +108,30 @@ class TcIndicator extends PanelMenu.Button {
         let item1 = new PopupMenu.PopupSwitchMenuItem(_('Brief mode'), false, null);
         item1.connect('toggled', () => {
             this._briefMode = item1.state;
-            this._settings.set_boolean(Prefs.Fields.BRIEF_MODE, this._briefMode);
+            this._settings.set_boolean(Utils.Fields.BRIEF_MODE, this._briefMode);
         });
         this.menu.addMenuItem(item1);
         this._briefModeItem = item1;
 
         let keybind = new PopupMenu.PopupBaseMenuItem({reactive : false,
                                                        can_focus : false});
-        keybind.add(new St.Label({text: "Translate selected",
-                                 x_align: Clutter.ActorAlign.START}));
-        let key0 = this._settings.get_strv(Prefs.Fields.TRANS_SELECTED)[0];
-        keybind.add(new St.Label({text: key0,
-                                 x_expand: true,
-                                 x_align: Clutter.ActorAlign.END}));
+        keybind.add_child(new St.Label({text: "Translate selected",
+                                       x_align: Clutter.ActorAlign.START}));
+        let key0 = this._settings.get_strv(Utils.Fields.TRANS_SELECTED)[0];
+        keybind.add_child(new St.Label({text: key0,
+                                       x_expand: true,
+                                       x_align: Clutter.ActorAlign.END}));
 
         this.menu.addMenuItem(keybind);
 
         let settingsItem = new PopupMenu.PopupMenuItem('Settings');
         this.menu.addMenuItem(settingsItem);
-
-        settingsItem.connect("activate", () => {
-            Gio.DBus.session.call(
-                                  'org.gnome.Shell.Extensions', // bus name
-                                  '/org/gnome/Shell/Extensions', // path
-                                  'org.gnome.Shell.Extensions', // interface
-                                  'OpenExtensionPrefs',
-                                  new GLib.Variant('(ssa{sv})', [Me.metadata.uuid, '', {}]),
-                                  null,
-                                  Gio.DBusCallFlags.NONE,
-                                  -1,
-                                  null);
-        });
+        settingsItem.connect('activate', this._openPrefs.bind(this));
 
         this._settingsChangedId = this._settings.connect('changed', () => {
             this._settingsChanged();
         });
-        this._tts = new AzureTTS.AzureTTS(null);
+        this._tts = new AzureTTS(null);
         this._settingsChanged();
         this._watchClipboard();
     }
@@ -156,16 +151,20 @@ class TcIndicator extends PanelMenu.Button {
         super.destroy();
     }
 
+    _openPrefs() {
+        this._extension.openPreferences();
+    }
+
     _settingsChanged() {
         this._oldtext = null;
-        this._enableTransItem.setToggleState(this._settings.get_boolean(Prefs.Fields.ENABLE_TRANS));
-        this._briefModeItem.setToggleState(this._settings.get_boolean(Prefs.Fields.BRIEF_MODE));
+        this._enableTransItem.setToggleState(this._settings.get_boolean(Utils.Fields.ENABLE_TRANS));
+        this._briefModeItem.setToggleState(this._settings.get_boolean(Utils.Fields.BRIEF_MODE));
         this._enabled = this._enableTransItem.state;
         this._briefMode = this._briefModeItem.state;
-        this._autoClose = this._settings.get_boolean(Prefs.Fields.AUTO_CLOSE);
+        this._autoClose = this._settings.get_boolean(Utils.Fields.AUTO_CLOSE);
 
-        let from = this._settings.get_string(Prefs.Fields.FROM);
-        let to = this._settings.get_string(Prefs.Fields.TO);
+        let from = this._settings.get_string(Utils.Fields.FROM);
+        let to = this._settings.get_string(Utils.Fields.TO);
 
         let isoLangs = Languages.isoLangs;
 
@@ -208,9 +207,9 @@ class TcIndicator extends PanelMenu.Button {
         this._to.set_text(to);
         this._removeKeybindings();
         this._setupKeybindings();
-        this._ttsEngine = this._settings.get_string(Prefs.Fields.TTS_ENGINE);
+        this._ttsEngine = this._settings.get_string(Utils.Fields.TTS_ENGINE);
         this._tts.engine = this._ttsEngine;
-        this._proxy = this._settings.get_string(Prefs.Fields.PROXY);
+        this._proxy = this._settings.get_string(Utils.Fields.PROXY);
     }
 
     _removeKeybindings() {
@@ -263,6 +262,8 @@ class TcIndicator extends PanelMenu.Button {
                     [this._x, this._y] = global.get_pointer();
                     this._translate(text).then(res => {
                         this._notify(res);
+                    }).catch(function() {
+                        log('Promise rejected');
                     });
                 }
             });
@@ -281,7 +282,7 @@ class TcIndicator extends PanelMenu.Button {
                                            vertical: true,
                                            x_expand: true,
                                            y_expand: true });
-            this._scroll.add_actor(this._box);
+            this._scroll.add_child(this._box);
 
             let closeIcon = new St.Icon({ icon_name: 'window-close-symbolic',
                                         icon_size: 24 });
@@ -512,8 +513,6 @@ class TcIndicator extends PanelMenu.Button {
             summary.add_child(l012);
             this._resBox.add_child(summary);
 
-            //print(JSON.stringify(json));
-
             if (this._briefMode)
                 return;
 
@@ -546,8 +545,9 @@ class TcIndicator extends PanelMenu.Button {
                     }
                 }
             }
-        } catch (e) {
-            global.log(e.toString());
+        } catch (error) {
+            log('Failed with error ' + error + ' @ '+error.lineNumber);
+            log(error.stack);
         }
     }
 
@@ -601,12 +601,11 @@ class TcIndicator extends PanelMenu.Button {
             proc.init(null);
             return await new Promise((resolve, reject) => {
                 proc.communicate_utf8_async(null, null, (proc, res) => {
-                    try {
-                        let [ok, stdout, stderr] = proc.communicate_utf8_finish(res);
+                    let [ok, stdout, stderr] = proc.communicate_utf8_finish(res);
+                    if (ok)
                         resolve(this._escape_translation(stdout));
-                    } catch(error) {
-                        reject(error);
-                    }
+                    else
+                        reject();
                 });
             });
         } catch (error) {
@@ -616,7 +615,7 @@ class TcIndicator extends PanelMenu.Button {
 
     async _translate(text) {
         //this._cancellable.cancel();
-        let cmd = [TRANS_CMD];
+        let cmd = [this._trans_cmd];
         if (this._proxy != '')
         {
             cmd.push('-x');
@@ -698,24 +697,13 @@ class TcIndicator extends PanelMenu.Button {
 
 });
 
-class Extension {
-    constructor(uuid) {
-        this._uuid = uuid;
-
-        ExtensionUtils.initTranslations(GETTEXT_DOMAIN);
-    }
-
+export default class TranslateClipboardExtension extends Extension {
     enable() {
-        this._indicator = new TcIndicator();
-        Main.panel.addToStatusArea(this._uuid, this._indicator);
+        tcIndicator = new TcIndicator(this);
+        Main.panel.addToStatusArea(IndicatorName, tcIndicator);
     }
-
     disable() {
-        this._indicator.destroy();
-        this._indicator = null;
+        tcIndicator.destroy();
+        tcIndicator = null;
     }
-}
-
-function init(meta) {
-    return new Extension(meta.uuid);
 }

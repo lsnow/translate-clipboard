@@ -1,12 +1,11 @@
-// For test
-// imports.gi.versions.Soup = '3.0';
+import GObject from 'gi://GObject';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import Soup from 'gi://Soup';
+import Gst from 'gi://Gst';
+import GstApp from 'gi://GstApp';
 
-// For Gnome Shell
-imports.gi.versions.Soup = '2.4';
-const { GLib, Gio, GObject, Soup, Gst, GstApp } = imports.gi;
-const ByteArray = imports.byteArray;
-const Params = imports.misc.params;
-//const Me = imports.misc.extensionUtils.getCurrentExtension();
+import * as Params from 'resource:///org/gnome/shell/misc/params.js';
 
 // Azure Speech API
 const trustedClientToken = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
@@ -16,8 +15,11 @@ const engineListUrl = 'https://speech.platform.bing.com/consumer/speech/synthesi
 let debug_tts = false;
 let writeToFile = false;
 
-var AzureTTS = GObject.registerClass(
-class AzureTTS extends GObject.Object {
+export class AzureTTS extends GObject.Object {
+    static {
+        GObject.registerClass(this);
+    }
+
     _init(params) {
         if (debug_tts == false) {
             params = Params.parse(params, {
@@ -28,6 +30,7 @@ class AzureTTS extends GObject.Object {
 
         this.engine = params.engine;
         this.codec = params.codec;
+        this._decoder = new TextDecoder('utf-8');
     }
 
     _play(text) {
@@ -42,7 +45,7 @@ class AzureTTS extends GObject.Object {
             return;
         }
         this._cancellable = new Gio.Cancellable();
-        session.websocket_connect_async(message, null, null, this._cancellable,
+        session.websocket_connect_async(message, null, null, 0, this._cancellable,
                                              (session, result, error) => {
                                                  if (error) {
                                                      log('Failed to connect: ' + error.message);
@@ -88,8 +91,7 @@ class AzureTTS extends GObject.Object {
 
     _onMessage(type, msg) {
         if (type == Soup.WebsocketDataType.TEXT) {
-            let bytes = msg.unref_to_array();
-            let data = ByteArray.toString(bytes);
+            const data = this._decoder.decode(msg.toArray());
             if (data.indexOf('turn.end') != -1) {
                 this._closed = true;
                 this.websocket.close(Soup.WebsocketCloseCode.normal, '');
@@ -121,9 +123,11 @@ class AzureTTS extends GObject.Object {
     _pushBuffer(buf) {
         this._appsrc.push_buffer(buf);
         if (this._playerState != Gst.State.PLAYING) {
-            const bus = this._pipeline.get_bus();
-            bus.add_watch(bus, this._onBusMessage.bind(this));
-            //this._pipeline.set_state(Gst.State.PLAYING);
+            if (!this._watchId) {
+                let bus = this._pipeline.get_bus();
+                this._watchId = bus.add_watch(bus, this._onBusMessage.bind(this));
+                //this._pipeline.set_state(Gst.State.PLAYING);
+            }
             this._playerState = Gst.State.PLAYING;
         }
     }
@@ -199,6 +203,11 @@ class AzureTTS extends GObject.Object {
         this._playerState = Gst.State.NULL;
         this._pipeline.set_state(Gst.State.VOID_PENDING);
         this._pipeline.set_state(Gst.State.PAUSED);
+        if (this._watchId)
+        {
+            GLib.source_remove(this._watchId);
+            this._watchId = 0;
+        }
     }
 
     playAudio(text) {
@@ -207,8 +216,9 @@ class AzureTTS extends GObject.Object {
             this._text = 'TTS test';
 
         if (!this._pipeline) {
-            Gst.init(null);
-            this._pipeline = Gst.parse_launch('appsrc name=src ! mpegaudioparse ! mpg123audiodec ! audioconvert ! pulsesink');
+            if (!Gst.is_initialized())
+                Gst.init(null);
+            this._pipeline = Gst.parse_launch('appsrc name=src ! mpegaudioparse ! mpg123audiodec ! audioconvert ! pipewiresink');
             this._appsrc = this._pipeline.get_by_name('src');
             this._playerState = Gst.State.NULL;
         }
@@ -225,8 +235,6 @@ class AzureTTS extends GObject.Object {
         }
     }
 }
-);
-
 /*
 let params = {
     engine: 'Microsoft Server Speech Text to Speech Voice (zh-CN, XiaoXiaoNeural)',

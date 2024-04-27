@@ -1,4 +1,4 @@
-var voices = [
+export var voices = [
   {
     "Name": "Microsoft Server Speech Text to Speech Voice (af-ZA, AdriNeural)",
     "ShortName": "af-ZA-AdriNeural",
