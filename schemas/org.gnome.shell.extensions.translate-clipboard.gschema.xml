@@ -19,7 +19,7 @@
     </key>
 
     <key name="enable-trans" type="b">
-      <default>true</default>
+      <default>false</default>
       <summary>Enable/Disable translation</summary>
       <description>
         Enable or disable translation.
@@ -42,7 +42,7 @@
       </description>
     </key>
     <key name="auto-close" type="b">
-      <default>true</default>
+      <default>false</default>
       <summary>Auto close</summary>
       <description>
         Auto close
@@ -51,9 +51,9 @@
 
     <key name="translate-selected-text" type="as">
       <default><![CDATA[['<Super>Y']]]></default>
-      <summary>Translate selected text even the extentiosn is disabled.</summary>
+      <summary>Translate selected text even the translation is disabled.</summary>
       <description>
-        Key to toggle translate selected text
+        Shortcut keys for translating selected text
       </description>
     </key>
 

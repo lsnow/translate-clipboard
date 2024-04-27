@@ -35,13 +35,16 @@ class TranslatePrefsWidget extends Adw.PreferencesPage {
         //this.margin = 20;
 
         this._addSwitch({key : 'enable-trans',
-                         label : _('Enable or disable translation')
+                        label : _('Enable or disable translation'),
+                        description : _('Whether to automatically translate selected text')
         });
         this._addSwitch({key : 'brief-mode',
-                         label : _('Brief mode')
+                        label : _('Brief mode'),
+                        description: null,
         });
         this._addSwitch({key : 'auto-close',
-                         label : _('Auto hide')
+                        label : _('Auto hide'),
+                        description: null,
         });
 
         /* TODO */
@@ -57,6 +60,7 @@ class TranslatePrefsWidget extends Adw.PreferencesPage {
         let row = new Adw.ActionRow({
             title: params.label,
             activatable_widget: sw,
+            subtitle: params.description
         });
         this._settings.bind(params.key, sw, 'active', Gio.SettingsBindFlags.DEFAULT);
         row.add_suffix(sw);
@@ -73,6 +77,7 @@ class TranslatePrefsWidget extends Adw.PreferencesPage {
         keys.get_style_context().add_class('dim-label');
         let row = new Adw.ActionRow({
             title: params.label,
+            subtitle: _('Shortcut keys for translating selected text')
         });
         row.add_suffix(keys);
         this._miscGroup.add(row);
@@ -87,6 +92,7 @@ class TranslatePrefsWidget extends Adw.PreferencesPage {
         });
         let row = new Adw.ComboRow({
             title: _('TTS Voice'),
+            subtitle: _('Text-to-speech')
         });
         row.add_suffix(voice);
         this._miscGroup.add(row);
