@@ -11,8 +11,6 @@ import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Ex
 import * as Voices from './voices.js';
 import * as Utils from './utils.js';
 
-const SCHEMA_NAME = 'org.gnome.shell.extensions.translate-clipboard';
-
 class TranslatePrefsWidget extends Adw.PreferencesPage {
     static {
         GObject.registerClass(this);
@@ -21,7 +19,6 @@ class TranslatePrefsWidget extends Adw.PreferencesPage {
     constructor(settings, dir) {
         super();
         this._settings = settings;
-        //this._settings = this.getSettings(SCHEMA_NAME);
 
         let provider = new Gtk.CssProvider();
         provider.load_from_path(dir + '/prefs.css');
@@ -32,7 +29,6 @@ class TranslatePrefsWidget extends Adw.PreferencesPage {
 
         this._miscGroup = new Adw.PreferencesGroup();
         this.add(this._miscGroup);
-        //this.margin = 20;
 
         this._addSwitch({key : 'enable-trans',
                         label : _('Enable or disable translation'),
@@ -103,10 +99,16 @@ class TranslatePrefsWidget extends Adw.PreferencesPage {
         });
        
         row.set_model(voiceList);
-        row.set_selected(Voices.voices.map(e => e.Name).indexOf(this._settings.get_string('voice')));
+        let idx = Voices.voices.map(e => e.Name).indexOf(this._settings.get_string('voice'));
+        if (idx == -1)
+            idx = 0;
+        row.set_selected(idx);
 
         this._settings.connect('changed::voice', (settings, key) => {
-            row.set_selected(Voices.voices.map(e => e.Name).indexOf(this._settings.get_string('voice')));
+            let idx = Voices.voices.map(e => e.Name).indexOf(this._settings.get_string('voice'));
+            if (idx == -1)
+                idx = 0;
+            row.set_selected(idx);
         });
         row.connect('notify::selected', () => {
             this._settings.set_string('voice', Voices.voices[row.get_selected()].Name);
