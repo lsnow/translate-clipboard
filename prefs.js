@@ -77,9 +77,6 @@ class TranslatePrefsWidget extends Adw.PreferencesPage {
         });
         row.add_suffix(keys);
         this._miscGroup.add(row);
-        /*
-        SettingsSchema.set_strv(id, [accelString]);
-        */
     }
     _addVoicesRow(){
         let voice = new Gtk.Label({label: '',
@@ -99,20 +96,21 @@ class TranslatePrefsWidget extends Adw.PreferencesPage {
         });
        
         row.set_model(voiceList);
-        let idx = Voices.voices.map(e => e.Name).indexOf(this._settings.get_string('voice'));
-        if (idx == -1)
-            idx = 0;
-        row.set_selected(idx);
+        this._onVoiceChanged(row);
 
         this._settings.connect('changed::voice', (settings, key) => {
-            let idx = Voices.voices.map(e => e.Name).indexOf(this._settings.get_string('voice'));
-            if (idx == -1)
-                idx = 0;
-            row.set_selected(idx);
+            this._onVoiceChanged(row);
         });
         row.connect('notify::selected', () => {
             this._settings.set_string('voice', Voices.voices[row.get_selected()].Name);
         });
+    }
+
+    _onVoiceChanged(row){
+        let index = Voices.voices.map(e => e.Name).indexOf(this._settings.get_string('voice'));
+        if (index == -1)
+            index = 0;
+        row.set_selected(index);
     }
 
     _addProxyRow(){

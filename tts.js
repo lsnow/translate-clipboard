@@ -3,6 +3,7 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Soup from 'gi://Soup';
 import Gst from 'gi://Gst';
+// this._appsrc is GstApp.AppSrc
 import GstApp from 'gi://GstApp';
 
 import * as Params from 'resource:///org/gnome/shell/misc/params.js';
@@ -155,7 +156,6 @@ export class AzureTTS extends GObject.Object {
             this.out = null;
         }
         if (this.f) {
-            this.f.run_dispose();
             this.f = null;
         }
     }
@@ -231,7 +231,7 @@ export class AzureTTS extends GObject.Object {
         if (this._pipeline) {
             this._stopPlayAudio();
             this._pipeline.set_state(Gst.State.NULL);
-            this._pipeline.run_dispose();
+            this._pipeline = null;
         }
     }
 }
