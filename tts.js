@@ -13,7 +13,7 @@ const trustedClientToken = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
 const wsUrl = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken='+trustedClientToken;
 const engineListUrl = 'https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voice/list?TrustedClientToken='+trustedClientToken;
 
-let debug_tts = false;
+let debug_tts = true;
 let writeToFile = false;
 
 export class AzureTTS extends GObject.Object {
@@ -24,7 +24,7 @@ export class AzureTTS extends GObject.Object {
     _init(params) {
         if (debug_tts == false) {
             params = Params.parse(params, {
-                engine: 'Microsoft Server Speech Text to Speech Voice (zh-CN, XiaoXiaoNeural)',
+                engine: 'zh-CN-XiaoXiaoNeural',
                 codec: 'audio-24khz-48kbitrate-mono-mp3',
             });
         }
@@ -95,12 +95,11 @@ export class AzureTTS extends GObject.Object {
             const data = this._decoder.decode(msg.toArray());
             if (data.indexOf('turn.end') != -1) {
                 this._closed = true;
-                this.websocket.close(Soup.WebsocketCloseCode.normal, '');
                 this._appsrc.end_of_stream();
+                this.websocket.close(Soup.WebsocketCloseCode.normal, '');
             }
         } else if (type == Soup.WebsocketDataType.BINARY) {
             let [_, len] = msg.get_data();
-            //log(len + 'size: ' + msg.get_size());
             len += 2;
             let data = msg.new_from_bytes(len, msg.get_size() - len);
             if (data) {
@@ -122,7 +121,7 @@ export class AzureTTS extends GObject.Object {
     }
 
     _pushBuffer(buf) {
-        this._appsrc.push_buffer(buf);
+        let flowRet = this._appsrc.push_buffer(buf);
         if (this._playerState != Gst.State.PLAYING) {
             if (!this._watchId) {
                 let bus = this._pipeline.get_bus();
@@ -161,16 +160,16 @@ export class AzureTTS extends GObject.Object {
     }
 
     _onClosed() {
+        this._closeFile();
         this._playerState = Gst.State.PLAYING;
         this._pipeline.set_state(Gst.State.PLAYING);
         this._disconnectSignals();
         this.websocket = null;
-        this._closeFile();
     }
 
     _onError(reason) {
         if (!this._closed)
-            log('onError: ' + reason);
+            log('Error: ' + reason);
         this._playerState = Gst.State.NULL;
     }
 
@@ -218,7 +217,7 @@ export class AzureTTS extends GObject.Object {
         if (!this._pipeline) {
             if (!Gst.is_initialized())
                 Gst.init(null);
-            this._pipeline = Gst.parse_launch('appsrc name=src ! mpegaudioparse ! mpg123audiodec ! audioconvert ! pipewiresink');
+            this._pipeline = Gst.parse_launch('appsrc name=src ! mpegaudioparse ! mpg123audiodec ! audioconvert ! audioresample ! autoaudiosink');// pipewiresink');
             this._appsrc = this._pipeline.get_by_name('src');
             this._playerState = Gst.State.NULL;
         }
@@ -235,10 +234,11 @@ export class AzureTTS extends GObject.Object {
         }
     }
 }
+
 /*
 let params = {
-    engine: 'Microsoft Server Speech Text to Speech Voice (zh-CN, XiaoXiaoNeural)',
-    //engine: 'zh-CN-XiaoXiaoNeural',
+    //engine: 'Microsoft Server Speech Text to Speech Voice (zh-CN, XiaoXiaoNeural)',
+    engine: 'zh-CN-XiaoXiaoNeural',
     codec: 'audio-24khz-48kbitrate-mono-mp3',
 };
 

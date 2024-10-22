@@ -40,6 +40,7 @@ import * as Util from 'resource:///org/gnome/shell/misc/util.js';
 import * as Utils from './utils.js';
 import * as Languages from './languages.js';
 import {AzureTTS} from './tts.js';
+import {TcTranslator} from './trans.js';
 
 const GETTEXT_DOMAIN = 'translate-clipboard-extension';
 const IndicatorName = 'Translate Clipboard';
@@ -91,9 +92,13 @@ class TcIndicator extends Button {
         codes.add_child(this._to);
         this.menu.addMenuItem(codes);
         this._from.clutter_text.connect('key-focus-out', ()=> {
+            if (this._from.text == '')
+                this._from.text == 'auto';
             this._settings.set_string(Utils.Fields.FROM, this._from.text);
         });
         this._to.clutter_text.connect('key-focus-out', ()=> {
+            if (this._to.text == '')
+                this._to.text == 'auto';
             this._settings.set_string(Utils.Fields.TO, this._to.text);
         });
 
@@ -132,6 +137,9 @@ class TcIndicator extends Button {
             this._settingsChanged();
         });
         this._tts = new AzureTTS(null);
+        this._translator = new TcTranslator();
+        this._translateCompleted = this._translator.connect('completed',
+            this._onCompleted.bind(this));
         this._settingsChanged();
         this._watchClipboard();
     }
@@ -170,38 +178,15 @@ class TcIndicator extends Button {
 
         if (from == '')
             from = 'auto';
-        if (to == '')
-            to = 'auto';
+        else
+            from = this._getCode(from);
 
-        if (from != 'auto' && (isoLangs[from] == undefined))
-        {
-            for (let code in isoLangs)
-            {
-                if ((isoLangs[code].name.toLowerCase().indexOf(from.toLowerCase()) != -1) ||
-                    (isoLangs[code].nativeName.toLowerCase().indexOf(from.toLowerCase) != -1))
-                {
-                    from = code;
-                    break;
-                }
-            }
-        }
-        if (isoLangs[from] == undefined)
-            from = 'auto';
-
-        if (to != 'auto' && (isoLangs[to] == undefined))
-        {
-            for (let code in isoLangs)
-            {
-                if ((isoLangs[code].name.toLowerCase().indexOf(to.toLowerCase()) != -1) ||
-                    (isoLangs[code].nativeName.toLowerCase().indexOf(to.toLowerCase()) != -1))
-                {
-                    to = code;
-                    break;
-                }
-            }
-        }
-        if (isoLangs[to] == undefined)
-            to = 'auto';
+        log(this.locale + ' to: ' + to);
+        if (to == '' || to.toLowerCase() == 'auto')
+            to = this._getCode(this.locale);
+        else
+            to = this._getCode(to);
+        log(this.locale + ' code: ' + to);
 
         this._from.set_text(from);
         this._to.set_text(to);
@@ -260,15 +245,12 @@ class TcIndicator extends Button {
                     !RegExp(/^[\.\s\d\-]+$/).exec(text)) {
                     this._oldtext = text;
                     [this._x, this._y] = global.get_pointer();
-                    this._translate(text).then(res => {
-                        this._notify(res);
-                    }).catch(function() {
-                        log('Promise rejected');
-                    });
+                    this._translate(text);
                 }
             });
     }
-    _notify(result) {
+
+    _onCompleted(emitter, result) {
         let [x, y] = [this._x, this._y];//global.get_pointer();
         if (!this._actor)
         {
@@ -358,8 +340,29 @@ class TcIndicator extends Button {
 
         if (this.locale == 'C')
             this.locale = 'en';
-        else if (this.locale.indexOf('_') != -1)
-            this.locale = this.locale.split("_")[0];
+        this.locale = this.locale.replace('_', '-');
+    }
+
+    _getCode (lang) {
+        let isoLangs = Languages.isoLangs;
+        lang = lang.replace('_', '-');
+        let code = isoLangs[lang];
+        if (code == undefined)
+        {
+            let codes = [lang, lang.split('-')[0]];
+            for (let [i, c] of codes.entries()) {
+                let l = Object.keys(isoLangs).find(key =>
+                     ((key.indexOf(c) != -1) ||
+                      (isoLangs[key].name.indexOf(c) != -1) ||
+                      (isoLangs[key].nativeName.indexOf(c) != -1)));
+                if (l != undefined)
+                    return l;
+            }
+            return 'en';
+        }
+        else {
+            return lang;
+        }
     }
 
     _isRtl (code) {
@@ -592,109 +595,10 @@ class TcIndicator extends Button {
             .replace(/>/g, '&gt;');
     }
 
-    async _exec(command) {
-        try {
-            let proc = new Gio.Subprocess({
-                argv: command,
-                flags: Gio.SubprocessFlags.STDOUT_PIPE
-            });
-            proc.init(null);
-            return await new Promise((resolve, reject) => {
-                proc.communicate_utf8_async(null, null, (proc, res) => {
-                    let [ok, stdout, stderr] = proc.communicate_utf8_finish(res);
-                    if (ok)
-                        resolve(this._escape_translation(stdout));
-                    else
-                        reject();
-                });
-            });
-        } catch (error) {
-            log('Error: ' + command + ' ' + error);
-        }
-    }
-
-    async _translate(text) {
-        //this._cancellable.cancel();
-        let cmd = [this._trans_cmd];
-        if (this._proxy != '')
-        {
-            cmd.push('-x');
-            cmd.push(this._proxy);
-        }
-        if (this._from.text != '' && this._from.text != 'auto')
-        {
-            cmd.push('-f');
-            cmd.push(this._from.text);
-        }
-        if (this._to.text != '' && this._to.text != 'auto')
-        {
-            cmd.push('-t');
-            cmd.push(this._to.text);
-        }
-        if (this._briefMode)
-            cmd.push('-b');
-        if (!this._showOriginalPhonetics)
-            cmd.push('-show-original-phonetics n')
-
-        cmd.push('-no-browser');
-        if (this._dump)
-            cmd.push('-dump');
-        cmd.push(text);
-        return this._exec(cmd);
-    }
-    /*
-    _childFinished(pid, status, _requestObj) {
-        this._childWatch = 0;
-    }
-    async _readStdout() {
-        log('read stdout');
-        const cnt =
-            await this._dataStdout.fill_async(-1, GLib.PRIORITY_DEFAULT, null);
-
-        log(cnt);
-        if (cnt === 0) {
-            this._stdout.close(null);
-            let data = (this._dataStdout.peek_buffer());
-            this._result = data;
-            //this._notify(data);
-            return;
-        }
-
-        // Try to read more
-        this._dataStdout.set_buffer_size(2 * this._dataStdout.get_buffer_size());
-        this._readStdout();
-    }
-
     _translate(text) {
-        try {
-            let argv = [TRANS_CMD, text];
-            let [success_, pid, stdin, stdout, stderr] =
-                GLib.spawn_async_with_pipes(null,
-                    argv,
-                    null,
-                    GLib.SpawnFlags.DO_NOT_REAP_CHILD,
-                    null);
-
-            this._childPid = pid;
-            //this._stdin = new Gio.UnixOutputStream({ fd: stdin, close_fd: true });
-            this._stdout = new Gio.UnixInputStream({ fd: stdout, close_fd: true });
-            GLib.close(stdin);
-            GLib.close(stderr);
-            this._dataStdout = new Gio.DataInputStream({ base_stream: this._stdout });
-
-            this._readStdout().then(res => {
-                this._notify(res);
-            });
-
-            this._childWatch = GLib.child_watch_add(GLib.PRIORITY_DEFAULT, pid,
-                this._childFinished.bind(this));
-
-        } catch (e) {
-            logError(e, 'error while spawning ' + TRANS_CMD);
-        }
+        this._translator.translate(this._from.text, this._to.text, this._proxy, text);
+        //this._escape_translation();
     }
-    */
-
 });
 
 export default class TranslateClipboardExtension extends Extension {
