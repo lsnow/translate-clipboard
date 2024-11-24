@@ -10,11 +10,29 @@ import * as Params from 'resource:///org/gnome/shell/misc/params.js';
 
 // Azure Speech API
 const trustedClientToken = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
-const wsUrl = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken='+trustedClientToken;
-const engineListUrl = 'https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voice/list?TrustedClientToken='+trustedClientToken;
+const chromiumFullVersion = '130.0.2849.68';
+const windowsFileTimeEpoch = 11644473600n;
+const wsBaseUrl = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1';
 
 let debug_tts = true;
 let writeToFile = false;
+
+// https://github.com/SchneeHertz/node-edge-tts/blob/master/src/drm.ts
+function generateSecMsGecToken() {
+    const ticks = BigInt(Math.floor((Date.now() / 1000) + Number(windowsFileTimeEpoch))) * 10000000n
+    const roundedTicks = ticks - (ticks % 3000000000n)
+
+    const strToHash = `${roundedTicks}${trustedClientToken}`
+
+    /*
+    const hash = createHash('sha256')
+    hash.update(strToHash, 'ascii')
+    return hash.digest('hex').toUpperCase()
+    */
+    //let checksum = GLib.Checksum.new(GLib.ChecksumType.SHA256);
+    let token = GLib.compute_checksum_for_string(GLib.ChecksumType.SHA256, strToHash, -1);
+    return token.toUpperCase();
+}
 
 export class AzureTTS extends GObject.Object {
     static {
@@ -40,6 +58,7 @@ export class AzureTTS extends GObject.Object {
         session.user_agent = 'Mozilla/5.0 (X11; Linux x86_64; rv:95.0) Gecko/20100101 Firefox/95.0';
         session.timeout = 15000;
         */
+        let wsUrl = `${wsBaseUrl}?TrustedClientToken=${trustedClientToken}&Sec-MS-GEC=${generateSecMsGecToken()}&Sec-MS-GEC-Version=1-${chromiumFullVersion}`;
         let message = Soup.Message.new ("GET", wsUrl);
         if (message == null) {
             log("Failed to create Soup message");
