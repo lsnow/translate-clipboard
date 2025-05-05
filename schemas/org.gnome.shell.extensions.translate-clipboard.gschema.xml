@@ -1,7 +1,6 @@
 <schemalist gettext-domain="gnome-shell-extensions">
   <schema id="org.gnome.shell.extensions.translate-clipboard"
-      path="/org/gnome/shell/extensions/translate-clipboard/">
-
+    path="/org/gnome/shell/extensions/translate-clipboard/">
     <key name="from" type="s">
       <default>'auto'</default>
       <summary>Source language</summary>
@@ -71,6 +70,29 @@
       <description>
         Proxy used for curl. [protocol://]host[:port].
         For socks5: socks5h://127.0.0.1:9999.
+      </description>
+    </key>
+
+    <key name="engine" type="s">
+      <default>'Google'</default>
+      <summary>Translate engine</summary>
+      <description>
+        Use google or LLM.
+      </description>
+    </key>
+    <!-- LLM: provider, model, apikey, Temperature, TopP, TopK, MinP, prompt -->
+    <key name="llm-provider" type="s">
+      <default>'OpenRouter'</default>
+      <summary>LLM Provider</summary>
+      <description>
+        LLM service provider (e.g. OpenAI, openrouter, etc.)
+      </description>
+    </key>
+    <key name="provider-settings" type="a{sv}">
+      <default>{}</default>
+      <summary>Provider Settings</summary>
+      <description>
+        LLM service provider (e.g. OpenAI, openrouter, etc.)
       </description>
     </key>
   </schema>

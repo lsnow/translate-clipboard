@@ -29,18 +29,18 @@ import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
-
-import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import {Button} from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as Util from 'resource:///org/gnome/shell/misc/util.js';
+import {notify} from 'resource:///org/gnome/shell/ui/main.js';
 
 import * as Utils from './utils.js';
 import * as Languages from './languages.js';
 import {AzureTTS} from './tts.js';
-import {TcTranslator} from './trans.js';
+import {GoogleTranslator} from './google.js';
+import {providers as Providers, AiTranslator} from './llm.js';
 
 const GETTEXT_DOMAIN = 'translate-clipboard-extension';
 const IndicatorName = 'Translate Clipboard';
@@ -53,6 +53,7 @@ class TcIndicator extends Button {
         super._init(0.0, IndicatorName, false);
 
         this._extension = ext;
+        this._settings = this._extension.getSettings();
         this._trans_cmd = ext.path + '/trans';
 
         this._enabled = true;
@@ -73,9 +74,6 @@ class TcIndicator extends Button {
         let box = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
         box.add_child(this._icon);
         this.add_child(box);
-
-        //this._settings = Prefs.SettingsSchema;
-        this._settings = this._extension.getSettings();
 
         let codes = new PopupMenu.PopupBaseMenuItem({reactive : false,
                                                      can_focus : false});
@@ -137,9 +135,6 @@ class TcIndicator extends Button {
             this._settingsChanged();
         });
         this._tts = new AzureTTS(null);
-        this._translator = new TcTranslator();
-        this._translateCompleted = this._translator.connect('completed',
-            this._onCompleted.bind(this));
         this._settingsChanged();
         this._watchClipboard();
     }
@@ -181,12 +176,10 @@ class TcIndicator extends Button {
         else
             from = this._getCode(from);
 
-        log(this.locale + ' to: ' + to);
         if (to == '' || to.toLowerCase() == 'auto')
             to = this._getCode(this.locale);
         else
             to = this._getCode(to);
-        log(this.locale + ' code: ' + to);
 
         this._from.set_text(from);
         this._to.set_text(to);
@@ -195,6 +188,31 @@ class TcIndicator extends Button {
         this._ttsEngine = this._settings.get_string(Utils.Fields.TTS_ENGINE);
         this._tts.engine = this._ttsEngine;
         this._proxy = this._settings.get_string(Utils.Fields.PROXY);
+        this._engine = this._settings.get_string(Utils.Fields.ENGINE);
+        if (this._engine != 'Google')
+            this._onProviderChanged();
+        else
+            this._translator = new GoogleTranslator();
+        this._translateCompleted = this._translator.connect('completed',
+            this._onCompleted.bind(this));
+        this._translator.connect('error', (object, error) => { notify(IndicatorName, error); });
+    }
+
+    _onProviderChanged() {
+        const provider = this._settings.get_string(Utils.Fields.LLM_PROVIDER);
+        try {
+            for (const p in Providers) {
+                if (Providers[p].name == provider) {
+                    let providerSettings = Utils.readConfig(this._settings, Utils.Fields.PROVIDER_SETTINGS)[p] ?? Utils.defaultConfig;
+                    providerSettings.provider = p;
+                    this._translator = new AiTranslator(providerSettings);
+                    break;
+                }
+            }
+        } catch (e) {
+            this._engine = 'Google';
+            this._translator = new GoogleTranslator();
+        }
     }
 
     _removeKeybindings() {
@@ -445,13 +463,28 @@ class TcIndicator extends Button {
             this._resBox = null;
         }
         try {
-            let json = JSON.parse(result);
-
             this._resBox = new St.BoxLayout({vertical: true,
                                             style_class: 'tc-result-box'
             });
             this._box.add_child(this._resBox);
 
+            if (this._engine != 'Google') {
+                let label = new St.Label({
+                    text: result,
+                    style_class: 'tc-title-label',
+                    track_hover: true,
+                    reactive: true,
+                });
+                label.clutter_text.set_line_wrap(true);
+                label.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+                label.connect('button-press-event', () => {
+                    this._tts.playAudio(f);
+                });
+                this._resBox.add_child(label);
+                return;
+            }
+
+            let json = JSON.parse(result);
             let t = '';
             let f = '';
             let t012 = json[0][1][2];
@@ -551,53 +584,12 @@ class TcIndicator extends Button {
         } catch (error) {
             log('Failed with error ' + error + ' @ '+error.lineNumber);
             log(error.stack);
+            notify(IndicatorName, 'Failed with error ' + error);
         }
-    }
-
-    _escape_translation(str) {
-        if (!str) {
-            return '';
-        }
-        if (this._dump)
-        {
-            let i = str.indexOf('[');
-            let j = str.lastIndexOf(']');
-            if (i == -1 || j == -1)
-                return str;
-            str = str.slice(i, j + 1);
-            return str;
-        }
-
-        let stuff = {
-            "\x1B[1m": '<b>',
-            "\x1B[22m": '</b>',
-            "\x1B[4m": '<u>',
-            "\x1B[24m": '</u>'
-        };
-        str = this._escape_html(str);
-        for (let hex in stuff) {
-            str = this._replace_all(str, hex, stuff[hex]);
-        }
-        return str;
-    }
-
-    _replace_all(str, find, replace) {
-        return (str || '')
-            .split(find)
-            .join(replace);
-    }
-    _escape_html(str) {
-        return (str || '')
-            .replace(/&/g, '&amp;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
     }
 
     _translate(text) {
         this._translator.translate(this._from.text, this._to.text, this._proxy, text);
-        //this._escape_translation();
     }
 });
 

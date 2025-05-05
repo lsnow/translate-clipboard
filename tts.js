@@ -14,7 +14,7 @@ const chromiumFullVersion = '130.0.2849.68';
 const windowsFileTimeEpoch = 11644473600n;
 const wsBaseUrl = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1';
 
-let debug_tts = true;
+let debug_tts = false;
 let writeToFile = false;
 
 // https://github.com/SchneeHertz/node-edge-tts/blob/master/src/drm.ts
