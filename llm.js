@@ -7,6 +7,7 @@ import * as Languages from './languages.js';
 const ByteArray = imports.byteArray;
 
 export const providers = {
+    /*
     "huggingface": {
         name: "Hugging Face",
         providers: [
@@ -24,15 +25,18 @@ export const providers = {
             return GLib.getenv("HUGGINGFACE_API_KEY");
         }
     },
+    */
     "openrouter": {
         name: "OpenRouter",
         models: [
             "deepseek/deepseek-chat-v3-0324:free",
+            "openai/gpt-4o-mini", // $0.15/0.60
             "google/gemini-2.0-flash-001", // $0.1/0.4 0.5s
             "deepseek/deepseek-r1",
             "anthropic/claude-3.7-sonnet:beta", // $3/15
             "anthropic/claude-3.7-sonnet", // $3/15
             "anthropic/claude-3.5-sonnet", // $3/15
+            "google/gemini-2.5-pro-exp-03-25",
             "openai/o3-mini-high",
             "openai/chatgpt-4o-latest", // $5/15
             "qwen/qwq-32b:free",
@@ -63,8 +67,8 @@ export const providers = {
             return GLib.getenv("GEMINI_API_KEY");
         },
         parseOutput(output) {
-            if (output.candidates && output.candidates[1].content)
-                return output.candidates[1].content.parts[1].text;
+            if (output.candidates && output.candidates[0].content)
+                return output.candidates[0].content.parts[0].text;
             return output;
         }
     },
@@ -202,7 +206,7 @@ export var AiTranslator = GObject.registerClass({
 
     translate(from, to, proxy, text) {
         let session = new Soup.Session();
-        session.set_timeout(5);
+        session.set_timeout(10);
         if ((proxy != null) && (proxy != '')) {
             let proxyResolver = Gio.SimpleProxyResolver.new(proxy, null);
             if (proxyResolver)

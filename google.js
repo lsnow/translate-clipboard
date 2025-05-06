@@ -66,15 +66,19 @@ export var GoogleTranslator = GObject.registerClass({
     }
 
     _processMessageRefresh(session, message, status) {
-        const decoder = new TextDecoder();
-        let data = (Soup.MAJOR_VERSION >= 3) ? 
-            decoder.decode(session.send_and_read_finish(message).get_data()): // Soup3
+        try {
+            const decoder = new TextDecoder();
+            let data = (Soup.MAJOR_VERSION >= 3) ? 
+                decoder.decode(session.send_and_read_finish(message).get_data()): // Soup3
             message.response_body.data; // Soup 2
 
-        if (status == 404)
-            this.emit('error', '404 (Page not found)');
-        else
-            this.emit('completed', data);
+            if (status == 404)
+                this.emit('error', '404 (Page not found)');
+            else
+                this.emit('completed', data);
+        } catch (error) {
+            this.emit('error', error.message);
+        }
     }
 
     cleanup() {
