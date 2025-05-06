@@ -30,13 +30,11 @@ export const providers = {
         name: "OpenRouter",
         models: [
             "deepseek/deepseek-chat-v3-0324:free",
-            "openai/gpt-4o-mini", // $0.15/0.60
-            "google/gemini-2.0-flash-001", // $0.1/0.4 0.5s
+            "google/gemini-2.5-flash-preview",
             "deepseek/deepseek-r1",
             "anthropic/claude-3.7-sonnet:beta", // $3/15
             "anthropic/claude-3.7-sonnet", // $3/15
             "anthropic/claude-3.5-sonnet", // $3/15
-            "google/gemini-2.5-pro-exp-03-25",
             "openai/o3-mini-high",
             "openai/chatgpt-4o-latest", // $5/15
             "qwen/qwq-32b:free",
@@ -46,6 +44,7 @@ export const providers = {
             return endpoint;
         },
         signup: "https://openrouter.ai/",
+        modelsUri: "https://openrouter.ai/models",
         getApiKey: function() {
             return GLib.getenv("OPENROUTER_API_KEY");
         }
@@ -144,10 +143,10 @@ export var AiTranslator = GObject.registerClass({
             this._provider = providers[params.provider];
             this._model = params.model;
             this._temperature = params.temperature;
-            this._top_p = params.top_p;
-            this._top_k = params.top_k;
-            this._min_p = params.min_p;
-            this._api_key = params.api_key;
+            this._top_p = params.topP;
+            this._top_k = params.topK;
+            this._min_p = params.minP;
+            this._api_key = params.apiKey;
             this._prompt = params.prompt;
         }
         if (!this._provider)

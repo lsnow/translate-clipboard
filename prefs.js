@@ -194,6 +194,20 @@ class AiPage extends Adw.PreferencesPage {
             tooltip_text: _('Model name/identifier for the LLM service'),
             text: ''
         });
+        this._nextButton = new Gtk.Button({
+            icon_name: 'view-refresh-symbolic',
+            css_classes: ['flat', 'circular'],
+            valign: Gtk.Align.CENTER,
+            tooltip_text: _('Next model'),
+        });
+        this._moreButton = new Gtk.Button({
+            icon_name: 'view-more-horizontal-symbolic',
+            css_classes: ['flat', 'circular'],
+            valign: Gtk.Align.CENTER,
+            tooltip_text: _('More models'),
+        });
+        modelRow.add_suffix(this._nextButton);
+        modelRow.add_suffix(this._moreButton);
         this._aiGroup.add(modelRow);
         this._modelRow = modelRow;
 
@@ -202,6 +216,14 @@ class AiPage extends Adw.PreferencesPage {
             title: _('API Key'),
             text: ''
         });
+        this._signupButton = new Gtk.LinkButton({
+            css_classes: ['flat'],
+            valign: Gtk.Align.CENTER,
+            uri: '',
+            label: 'New',
+            tooltip_text: _('Signup'),
+        });
+        apiKeyRow.add_suffix(this._signupButton);
         this._aiGroup.add(apiKeyRow);
         this._apiKeyRow = apiKeyRow;
 
@@ -332,6 +354,22 @@ class AiPage extends Adw.PreferencesPage {
         this._topKRow.connect('changed', (row) => { this._writeSettings(); });
         this._minPRow.connect('changed', (row) => { this._writeSettings(); });
         this._promptBuffer.connect('changed', () => { this._writeSettings(); });
+
+        this._nextButton.connect('clicked', () => {
+            const models = Providers[this._provider].models;
+            const model = this._modelRow.get_text();
+            const current = models.indexOf(model);
+            const next = current !== -1 && current < models.length - 1
+                ? current + 1
+                : 0;
+            this._modelRow.set_text(models[next]);
+        });
+
+        this._moreButton.connect('clicked', () => {
+            const modelsUri = Providers[this._provider].modelsUri;
+            const launcher = new Gtk.UriLauncher({ uri: modelsUri ?? '' });
+            launcher.launch(null, null, null, null);
+        });
     }
 
     _writeSettings() {
@@ -354,10 +392,9 @@ class AiPage extends Adw.PreferencesPage {
     _refresh() {
         const configs = Utils.readConfig(this._settings, 'provider-settings');
         const params = configs[this._provider] ?? {};
-        const model = (params.model && params.model != '') ?
-            params.model : Providers[this._provider].models[0];
+        const model = params.model || Providers[this._provider].models[0] || '';
         const temperature = params.temperature ?? Utils.defaultConfig.temperature;
-        const apiKey = params.apiKey ?? Providers[this._provider].getApiKey();
+        const apiKey = params.apiKey || Providers[this._provider].getApiKey() || '';
         const topP = params.topP ?? Utils.defaultConfig.topP;
         const topK = params.topK ?? Utils.defaultConfig.topK;
         const minP = params.minP ?? Utils.defaultConfig.minP;
@@ -370,6 +407,15 @@ class AiPage extends Adw.PreferencesPage {
         this._topKRow.set_value(topK);
         this._minPRow.set_value(minP);
         this._promptBuffer.set_text(prompt, -1);
+
+        const signupUri = Providers[this._provider].signup;
+        if (signupUri) {
+            this._signupButton.set_uri(signupUri);
+            this._signupButton.set_sensitive(true);
+        } else {
+            this._signupButton.set_sensitive(false);
+            this._signupButton.set_uri('');
+        }
     }
 }
 
