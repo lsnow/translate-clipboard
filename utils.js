@@ -22,7 +22,7 @@ export var defaultConfig = {
     'topP': 0.7,
     'topK': 20,
     'minP': 0.0,
-    'prompt': 'Please respect the original meaning, maintain the original format, and rewrite the given content in {destination_language}.\nFor cultural or context-specific references that may not directly translate, paraphrase to preserve the intended meaning or provide a brief explanation.\nThe emphasis should be on maintaining the integrity of the technical content while ensuring the translation is comprehensible and contextually accurate in {destination_language}.\nThis is the text to translate:\n{selected_text}'
+    'prompt': 'Please respect the original meaning, maintain the original format, and rewrite the given content in {destination_language}.\nFor cultural or context-specific references that may not directly translate, paraphrase to preserve the intended meaning or provide a brief explanation.\nThe emphasis should be on maintaining the integrity of the technical content while ensuring the translation is comprehensible and contextually accurate in {destination_language}. If it is a technical term, give a brief explanation.\nThis is the text to translate:\n{selected_text}'
 };
 
 export function readConfig(settings, key) {
