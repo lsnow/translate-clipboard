@@ -41,10 +41,7 @@ class GeneralPage extends Adw.PreferencesPage {
                         description: null,
         });
 
-        /* TODO */
-        this._addKeybindingRow({label: _('Translate selected text'),
-                                keys: Utils.Fields.TRANS_SELECTED
-        });
+        this._addKeybindingRow();
 
         this._addVoicesRow();
         this._addProxyRow();
@@ -62,20 +59,151 @@ class GeneralPage extends Adw.PreferencesPage {
         this._miscGroup.add(row);
     }
 
-    _addKeybindingRow(params){
-        let key0 = this._settings.get_strv(params.keys)[0];
-        let [ok, key, mods] = Gtk.accelerator_parse(key0);
-        let accelString = ok ? Gtk.accelerator_name(key, mods) : "";
-        let keys = new Gtk.Label({label: accelString,
-                                  halign : Gtk.Align.END,
-                                  valign : Gtk.Align.CENTER,
+    validateShortcut(accelerator) {
+        if (!accelerator) return false;
+
+        if (accelerator.startsWith('XF86') || 
+            ['Return', 'Escape', 'Tab', 'BackSpace'].includes(accelerator)) {
+            return false;
+        }
+
+        const modifiers = ['<Control>', '<Alt>', '<Shift>', '<Super>'];
+        if (!modifiers.some(m => accelerator.includes(m))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    _editShortcut(key, row, shortcutLabel) {
+        const dialog = new Adw.Dialog({
+            title: 'Set Shortcut',
         });
-        keys.get_style_context().add_class('dim-label');
+
+        const toolbarView = new Adw.ToolbarView();
+        const headerBar = new Adw.HeaderBar({
+            show_start_title_buttons: false,
+            show_end_title_buttons: false,
+        });
+        const cancelButton = new Gtk.Button({ label: _("Cancel") });
+        headerBar.pack_start(cancelButton);
+
+        const applyButton = new Gtk.Button({
+            label: _("Apply"),
+            css_classes: ['suggested-action'],
+        });
+        headerBar.pack_end(applyButton);
+        applyButton.set_sensitive(false);
+
+        const vbox = new Gtk.Box({
+            orientation: Gtk.Orientation.VERTICAL,
+            spacing: 12,
+            margin_top:12,
+            margin_bottom:12,
+            margin_start:12,
+            margin_end:12
+        });
+        vbox.append(new Gtk.Label({
+            label: _("Press the desired shortcut keys.\nPress Esc to cancel, Backspace to clear current input."),
+            halign: Gtk.Align.CENTER,
+            justify: Gtk.Justification.CENTER,
+            margin_bottom: 12,
+            css_classes: ['dim-label'],
+        }));
+
+        const currentKey = this._settings.get_strv(key)[0];
+        let currentKeyLabel = new Gtk.ShortcutLabel({
+            accelerator: currentKey || '',
+            disabled_text: _("Press a key..."),
+            halign: Gtk.Align.CENTER,
+        });
+        vbox.append(currentKeyLabel);
+
+        toolbarView.add_top_bar(headerBar);
+        toolbarView.set_content(vbox);
+        dialog.set_child(toolbarView);
+        dialog.present(this.get_root());
+
+        cancelButton.connect('clicked', () => {
+            dialog.close();
+        });
+
+        applyButton.connect('clicked', () => {
+            if (capturedAccel !== null)
+                this._settings.set_strv(key, [capturedAccel]);
+            this._shortcutLabel.set_label(capturedAccel || _('Disabled'));
+            dialog.close();
+        });
+
+        let capturedAccel = null;
+        const controller = new Gtk.EventControllerKey();
+        dialog.add_controller(controller);
+        controller.connect('key-pressed', (controller, keyval, keycode, state) => {
+            if (keyval === Gdk.KEY_Control_L || keyval === Gdk.KEY_Control_R ||
+                keyval === Gdk.KEY_Alt_L     || keyval === Gdk.KEY_Alt_R ||
+                keyval === Gdk.KEY_Shift_L   || keyval === Gdk.KEY_Shift_R ||
+                keyval === Gdk.KEY_Super_L   || keyval === Gdk.KEY_Super_R ||
+                keyval === Gdk.KEY_Meta_L    || keyval === Gdk.KEY_Meta_R) {
+                return Gdk.EVENT_PROPAGATE;
+            }
+            if (keyval === Gtk.KEY_Escape) {
+                dialog.close();
+                return Gdk.EVENT_STOP;
+            }
+            if (keyval === Gdk.KEY_BackSpace) {
+                capturedAccel = "";
+                currentKeyLabel.set_accelerator("");
+                currentKeyLabel.set_disabled_text(_("Cleared (Press Apply)"));
+                applyButton.set_sensitive(true);
+                return Gdk.EVENT_STOP;
+            }
+            if (Gtk.accelerator_valid(keyval, state)) {
+                let accel = Gtk.accelerator_name(keyval, state);
+                const lastGT = accel.lastIndexOf('>');
+                let keyPart = accel.substring(lastGT + 1);
+                if (keyPart.length === 1 && keyPart >= 'a' && keyPart <= 'z') {
+                    keyPart = keyPart.toUpperCase();
+                    accel = accel.substring(0, lastGT + 1) + keyPart;
+                }
+                capturedAccel = accel;
+                currentKeyLabel.set_accelerator(accel);
+                applyButton.set_sensitive(true);
+                return Gdk.EVENT_STOP;
+            }
+            return Gdk.EVENT_PROPAGATE;
+        });
+
+        dialog.connect('close-attempt', () => {
+            return false;
+        });
+    }
+
+    _addKeybindingRow(){
+        const current = this._settings.get_strv(Utils.Fields.TRANS_SELECTED)[0];
+        const [ok, key, mods] = Gtk.accelerator_parse(current);
+        const accelString = ok ? Gtk.accelerator_name(key, mods) : "";
+        const shortcutLabel = new Gtk.Label({
+            label: accelString,
+            halign : Gtk.Align.END,
+            valign : Gtk.Align.CENTER,
+        });
+        this._shortcutLabel = shortcutLabel;
+        //shortcut.get_style_context().add_class('dim-label');
+        const editButton = new Gtk.Button({
+            icon_name: 'document-edit-symbolic',
+            valign: Gtk.Align.CENTER
+        });
+
         let row = new Adw.ActionRow({
-            title: params.label,
+            title: 'Translate the selected text',
             subtitle: _('Shortcut keys for translating selected text')
         });
-        row.add_suffix(keys);
+
+        editButton.connect('clicked', () => {
+            this._editShortcut(Utils.Fields.TRANS_SELECTED, row, shortcutLabel);
+        });
+        row.add_suffix(shortcutLabel);
+        row.add_suffix(editButton);
         this._miscGroup.add(row);
     }
 
