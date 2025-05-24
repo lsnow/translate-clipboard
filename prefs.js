@@ -59,22 +59,6 @@ class GeneralPage extends Adw.PreferencesPage {
         this._miscGroup.add(row);
     }
 
-    validateShortcut(accelerator) {
-        if (!accelerator) return false;
-
-        if (accelerator.startsWith('XF86') || 
-            ['Return', 'Escape', 'Tab', 'BackSpace'].includes(accelerator)) {
-            return false;
-        }
-
-        const modifiers = ['<Control>', '<Alt>', '<Shift>', '<Super>'];
-        if (!modifiers.some(m => accelerator.includes(m))) {
-            return false;
-        }
-
-        return true;
-    }
-
     _editShortcut(key, row, shortcutLabel) {
         const dialog = new Adw.Dialog({
             title: 'Set Shortcut',
@@ -299,7 +283,6 @@ class AiPage extends Adw.PreferencesPage {
             name: 'LLM'
         });
         this._settings = settings;
-        this._schema = this._settings.settings_schema;
         // Create widget for setting provider, model, apikey, temperature, TopP, TopK, MinP, prompt
         this._aiGroup = new Adw.PreferencesGroup();
         this.add(this._aiGroup);
@@ -315,6 +298,21 @@ class AiPage extends Adw.PreferencesPage {
         });
         providerRow.set_model(providerList);
         this._aiGroup.add(providerRow);
+
+        const endpointRow = new Adw.EntryRow({
+            title: _('Endpoint'),
+            tooltip_text: _('Endpoint for the LLM service'),
+            text: ''
+        });
+        this._resetEndpoint = new Gtk.Button({
+            icon_name: 'edit-undo-symbolic',
+            css_classes: ['flat', 'circular'],
+            valign: Gtk.Align.CENTER,
+            tooltip_text: _('Undo'),
+        });
+        endpointRow.add_suffix(this._resetEndpoint);
+        this._aiGroup.add(endpointRow);
+        this._endpointRow = endpointRow;
 
         // Model selection
         const modelRow = new Adw.EntryRow({
@@ -441,8 +439,15 @@ class AiPage extends Adw.PreferencesPage {
         resetButton.get_style_context().add_class('destructive-action');
 
         resetButton.connect('clicked', () => {
-            this._settings.reset('llm-provider');
-            this._settings.reset('provider-settings');
+            const schema = this._settings.schema_id;
+            Utils.removeApiKey(schema, this._provider, () => {
+                this._apiKeyRow.set_text('');
+                const currentProvider = this._provider;
+                this._settings.reset('llm-provider');
+                this._settings.reset('provider-settings');
+                if (currentProvider == this._provider)
+                    this._refresh();
+            });
         });
         const resetGroup = new Adw.PreferencesGroup({
             header_suffix: resetButton
@@ -475,13 +480,29 @@ class AiPage extends Adw.PreferencesPage {
     }
 
     _bindSettings() {
+        this._endpointRow.connect('changed', (row) => { this._writeSettings(); });
         this._modelRow.connect('changed', (row) => { this._writeSettings(); });
-        this._apiKeyRow.connect('changed', (row) => { this._writeSettings(); });
+        this._apiKeyRow.connect('changed', (row) => {
+            if (this._isReadFromSecret) {
+                this._isReadFromSecret = false;
+                return;
+            }
+            const apiKey = this._apiKeyRow.get_text();
+            const schema = this._settings.schema_id;
+            Utils.removeApiKey(schema, this._provider, () => {
+                Utils.storeApiKey(schema, this._provider, apiKey);
+            });
+        });
         this._temperatureRow.connect('changed', (row) => { this._writeSettings(); });
         this._topPRow.connect('changed', (row) => { this._writeSettings(); });
         this._topKRow.connect('changed', (row) => { this._writeSettings(); });
         this._minPRow.connect('changed', (row) => { this._writeSettings(); });
         this._promptBuffer.connect('changed', () => { this._writeSettings(); });
+
+        this._resetEndpoint.connect('clicked', () => {
+            const endpoint = Providers[this._provider].endpoint;
+            this._endpointRow.set_text(endpoint);
+        });
 
         this._nextButton.connect('clicked', () => {
             const models = Providers[this._provider].models;
@@ -490,7 +511,7 @@ class AiPage extends Adw.PreferencesPage {
             const next = current !== -1 && current < models.length - 1
                 ? current + 1
                 : 0;
-            this._modelRow.set_text(models[next]);
+            this._modelRow.set_text(models[next] || model);
         });
 
         this._moreButton.connect('clicked', () => {
@@ -505,8 +526,8 @@ class AiPage extends Adw.PreferencesPage {
         let [start, end] = this._promptBuffer.get_bounds();
         let text = this._promptBuffer.get_text(start, end, false);
         const params = {
+            endpoint: this._endpointRow.get_text(),
             model: this._modelRow.get_text(),
-            apiKey: this._apiKeyRow.get_text(),
             temperature: this._temperatureRow.get_value(),
             topP: this._topPRow.get_value(),
             topK: this._topKRow.get_value(),
@@ -514,22 +535,38 @@ class AiPage extends Adw.PreferencesPage {
             prompt: text,
         };
         configs[this._provider] = params;
+        // For compatibility with previous versions
+        for (const [provider, config] of Object.entries(configs)) {
+            if (!config.endpoint)
+                config.endpoint = Providers[provider].endpoint;
+        }
         Utils.writeConfig(this._settings, 'provider-settings', configs);
     }
 
     _refresh() {
         const configs = Utils.readConfig(this._settings, 'provider-settings');
         const params = configs[this._provider] ?? {};
+        const endpoint = params.endpoint || Providers[this._provider].endpoint;
         const model = params.model || Providers[this._provider].models[0] || '';
         const temperature = params.temperature ?? Utils.defaultConfig.temperature;
-        const apiKey = params.apiKey || Providers[this._provider].getApiKey() || '';
         const topP = params.topP ?? Utils.defaultConfig.topP;
         const topK = params.topK ?? Utils.defaultConfig.topK;
         const minP = params.minP ?? Utils.defaultConfig.minP;
         const prompt = params.prompt ?? Utils.defaultConfig.prompt;
 
+        const schema = this._settings.schema_id;
+        Utils.getApiKey(schema, this._provider,
+            (apiKey) => {
+                this._isReadFromSecret = !!apiKey;
+                this._apiKeyRow.set_text(apiKey || Providers[this._provider].getApiKey() || '');
+            },
+            (error) => {
+                log(error);
+            }
+        );
+
+        this._endpointRow.set_text(endpoint);
         this._modelRow.set_text(model);
-        this._apiKeyRow.set_text(apiKey);
         this._temperatureRow.set_value(temperature);
         this._topPRow.set_value(topP);
         this._topKRow.set_value(topK);

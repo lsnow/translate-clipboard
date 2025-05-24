@@ -205,6 +205,7 @@ class TcIndicator extends Button {
                 if (Providers[p].name == provider) {
                     let providerSettings = Utils.readConfig(this._settings, Utils.Fields.PROVIDER_SETTINGS)[p] ?? Utils.defaultConfig;
                     providerSettings.provider = p;
+                    providerSettings.schema = this._settings.schema_id;
                     this._translator = new AiTranslator(providerSettings);
                     break;
                 }
