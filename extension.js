@@ -457,6 +457,33 @@ class TcIndicator extends Button {
         return box;
     }
 
+    /* parse markdown to pango markup */
+    _md2pango (origin) {
+        if (!origin || typeof origin !== 'string') {
+            return origin;
+        }
+
+        let result = origin;
+
+        // Convert markdown bold (**text** or __text__) to pango bold
+        result = result.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+        result = result.replace(/__(.*?)__/g, '<b>$1</b>');
+
+        // Convert markdown italic (*text* or _text_) to pango italic
+        result = result.replace(/\*(.*?)\*/g, '<i>$1</i>');
+        result = result.replace(/_(.*?)_/g, '<i>$1</i>');
+
+        // Convert markdown headers (# text) to pango large/bold
+        result = result.replace(/^### (.*$)/gm, '<b>$1</b>');
+        result = result.replace(/^## (.*$)/gm, '<big><b>$1</b></big>');
+        result = result.replace(/^# (.*$)/gm, '<span size="large"><b>$1</b></span>');
+
+        // Escape remaining XML characters that aren't part of markup
+        result = result.replace(/&(?!(?:lt|gt|amp|quot|apos|#\d+|#x[0-9a-fA-F]+);)/g, '&amp;');
+        result = result.replace(/<(?!\/?(?:b|i|u|s|tt|big|small|span|sup|sub)(?:\s|>))/g, '&lt;');
+        return result;
+    }
+
     _parseResult (result) {
         if (this._resBox) {
             //this._box.remove_child(this._resBox);
@@ -471,13 +498,13 @@ class TcIndicator extends Button {
 
             if (this._engine != 'Google') {
                 let label = new St.Label({
-                    text: result,
                     style_class: 'tc-title-label',
                     track_hover: true,
                     reactive: true,
                 });
                 label.clutter_text.set_line_wrap(true);
                 label.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+                label.clutter_text.set_markup(this._md2pango(result));
                 label.connect('button-press-event', () => {
                     this._tts.playAudio(f);
                 });
