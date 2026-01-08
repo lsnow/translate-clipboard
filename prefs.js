@@ -40,6 +40,7 @@ class GeneralPage extends Adw.PreferencesPage {
                         label : _('Auto hide'),
                         description: null,
         });
+        this._addAutoHideModeRow();
 
         this._addKeybindingRow();
 
@@ -208,7 +209,7 @@ class GeneralPage extends Adw.PreferencesPage {
         Voices.voices.forEach((v) => {
             voiceList.append(this._getShortName(v.FriendlyName));
         });
-       
+
         row.set_model(voiceList);
         this._onVoiceChanged(row);
 
@@ -225,6 +226,37 @@ class GeneralPage extends Adw.PreferencesPage {
         if (index == -1)
             index = 0;
         row.set_selected(index);
+    }
+
+    _addAutoHideModeRow(){
+        let row = new Adw.ComboRow({
+            title: _('Auto hide mode'),
+            subtitle: _('How to auto hide the translation window')
+        });
+        this._miscGroup.add(row);
+
+        const modeList = new Gtk.StringList;
+        modeList.append(_('Timeout'));
+        modeList.append(_('Click outside'));
+        modeList.append(_('Both'));
+
+        row.set_model(modeList);
+        this._onAutoHideModeChanged(row);
+
+        this._settings.connect('changed::auto-hide-mode', (settings, key) => {
+            this._onAutoHideModeChanged(row);
+        });
+        row.connect('notify::selected', () => {
+            const modes = ['timeout', 'click', 'both'];
+            this._settings.set_string('auto-hide-mode', modes[row.get_selected()]);
+        });
+    }
+
+    _onAutoHideModeChanged(row){
+        const mode = this._settings.get_string('auto-hide-mode') || 'timeout';
+        const modes = ['timeout', 'click', 'both'];
+        const index = modes.indexOf(mode);
+        row.set_selected(index >= 0 ? index : 0);
     }
 
     _addProxyRow(){
@@ -253,7 +285,7 @@ class GeneralPage extends Adw.PreferencesPage {
         const engineList  = new Gtk.StringList;
         engineList.append("Google");
         engineList.append("LLM");
-       
+
         row.set_model(engineList);
         this._onEngineChanged(row);
 
@@ -286,7 +318,7 @@ class AiPage extends Adw.PreferencesPage {
         // Create widget for setting provider, model, apikey, temperature, TopP, TopK, MinP, prompt
         this._aiGroup = new Adw.PreferencesGroup();
         this.add(this._aiGroup);
-        
+
         // Provider
         const providerList = new Gtk.StringList();
         Object.values(Providers).forEach(p => {

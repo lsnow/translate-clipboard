@@ -6,6 +6,7 @@ export var Fields = {
     ENABLE_SELECTION: 'enable-selection',
     BRIEF_MODE: 'brief-mode',
     AUTO_CLOSE: 'auto-close',
+    AUTO_HIDE_MODE: 'auto-hide-mode',
     FROM: 'from',
     TO: 'to',
     TRANS_SELECTED: 'translate-selected-text',

@@ -60,10 +60,14 @@ class TcIndicator extends Button {
         this._oldtext = null;
         this._showOriginalPhonetics = true;
         this._autoClose = true;
+        this._autoHideMode = 'timeout';
         this._engine = 'google';
         this._dump = true;
         this._ttsEngine = 'Microsoft Server Speech Text to Speech Voice (zh-CN, XiaoXiaoNeural)';
         this._proxy = '';
+        this._clickHandlerId = null;
+        this._clickPollId = null;
+        this._lastMouseState = null;
 
         this._locale = this._getLocale();
 
@@ -143,6 +147,7 @@ class TcIndicator extends Button {
         this._removeKeybindings();
         this._selection.disconnect(this._ownerChangedId);
         this._settings.disconnect(this._settingsChangedId);
+        this._removeClickHandler();
         if (this._actor)
             this._actor.destroy();
         if (this._popupTimeoutId) {
@@ -165,6 +170,12 @@ class TcIndicator extends Button {
         this._enabled = this._enableTransItem.state;
         this._briefMode = this._briefModeItem.state;
         this._autoClose = this._settings.get_boolean(Utils.Fields.AUTO_CLOSE);
+        this._autoHideMode = this._settings.get_string(Utils.Fields.AUTO_HIDE_MODE) || 'timeout';
+
+        // 如果窗口已经显示，需要更新隐藏方式
+        if (this._actor && this._actor.visible) {
+            this._updateHideBehavior();
+        }
 
         let from = this._settings.get_string(Utils.Fields.FROM);
         let to = this._settings.get_string(Utils.Fields.TO);
@@ -350,8 +361,28 @@ class TcIndicator extends Button {
 
         this._actor.set_position(x, y + 10);
         this._actor.show();
-        if (this._autoClose)
-            this._updatePopupTimeout(5000);
+        this._updateHideBehavior();
+    }
+
+    _updateHideBehavior() {
+        // 清除之前的隐藏设置
+        this._removeClickHandler();
+        this._updatePopupTimeout(0);
+
+        // 根据自动隐藏模式设置相应的隐藏方式
+        if (this._autoClose) {
+            if (this._autoHideMode === 'click' || this._autoHideMode === 'both') {
+                this._setupClickHandler();
+            }
+            if (this._autoHideMode === 'timeout' || this._autoHideMode === 'both') {
+                this._updatePopupTimeout(5000);
+            }
+        } else {
+            // 即使自动关闭关闭，如果模式是 click，也启用点击隐藏
+            if (this._autoHideMode === 'click' || this._autoHideMode === 'both') {
+                this._setupClickHandler();
+            }
+        }
     }
 
     _getLocale () {
@@ -390,6 +421,7 @@ class TcIndicator extends Button {
     }
 
     _close() {
+        this._removeClickHandler();
         this._actor.hide();
         if (this._label) {
             this._label.destroy();
@@ -402,17 +434,24 @@ class TcIndicator extends Button {
         }
     }
 
-    _popupTimeout() {
+    _isPointerInsideWindow() {
+        if (!this._actor || !this._actor.visible)
+            return false;
+
         let [x, y] = global.get_pointer();
         let [x_, y_] = this._actor.get_transformed_position();
         let [w_, h_] = this._actor.get_transformed_size();
-        if (x > x_ && y > y_ &&
-            x < x_ + w_ && y < y_ + h_)
-        {
+        return x > x_ && y > y_ &&
+               x < x_ + w_ && y < y_ + h_;
+    }
+
+    _popupTimeout() {
+        if (this._isPointerInsideWindow()) {
             this._updatePopupTimeout(1000);
             return;
         }
 
+        this._removeClickHandler();
         this._actor.hide();
         if (this._label) {
             this._label.destroy();
@@ -438,6 +477,42 @@ class TcIndicator extends Button {
              GLib.Source.set_name_by_id(this._popupTimeoutId, '[gnome-shell] this._popupTimeout');
          }
      }
+
+    _setupClickHandler() {
+        this._removeClickHandler();
+        if (!this._actor || !this._actor.visible)
+            return;
+
+        // 使用 Meta.Display 的 focus-window 信号
+        // 当用户点击其他窗口时，该窗口会获得焦点，从而触发此信号
+        this._clickHandlerId = global.display.connect('focus-window',
+            this._onFocusWindow.bind(this));
+    }
+
+    _removeClickHandler() {
+        if (this._clickHandlerId) {
+            global.display.disconnect(this._clickHandlerId);
+            this._clickHandlerId = null;
+        }
+    }
+
+    _onFocusWindow(display, window) {
+        if (!this._actor || !this._actor.visible)
+            return;
+
+        // 只有在启用点击隐藏时才处理
+        if (this._autoHideMode !== 'click' && this._autoHideMode !== 'both')
+            return;
+
+        // 检查鼠标是否在翻译窗口内
+        if (this._isPointerInsideWindow()) {
+            // 鼠标在窗口内，不隐藏
+            return;
+        }
+
+        // 鼠标在窗口外，隐藏窗口
+        this._close();
+    }
 
     _createLabelWidget (str1, str2, rtl1, rtl2) {
         let box = new St.BoxLayout({vertical: rtl1 || rtl2});

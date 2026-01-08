@@ -47,6 +47,13 @@
         Auto close
       </description>
     </key>
+    <key name="auto-hide-mode" type="s">
+      <default>'timeout'</default>
+      <summary>Auto hide mode</summary>
+      <description>
+        Auto hide mode: 'click' for click outside to hide, 'timeout' for timeout hide, 'both' for both
+      </description>
+    </key>
 
     <key name="translate-selected-text" type="as">
       <default><![CDATA[['<Super>Y']]]></default>
