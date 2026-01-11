@@ -483,8 +483,25 @@ class TcIndicator extends Button {
         if (!this._actor || !this._actor.visible)
             return;
 
-        // 使用 Meta.Display 的 focus-window 信号
-        // 当用户点击其他窗口时，该窗口会获得焦点，从而触发此信号
+        let currentFocusWindow = global.display.get_focus_window();
+        let workspace = global.display.get_workspace_manager().get_active_workspace();
+        let windows = workspace.list_windows();
+        
+        let targetWindow = null;
+        for (let i = 0; i < windows.length; i++) {
+            let win = windows[i];
+            if (win !== currentFocusWindow) {
+                targetWindow = win;
+                if (win.title && win.title.includes('Desktop')) {
+                    break;
+                }
+            }
+        }
+        
+        if (targetWindow) {
+            targetWindow.focus(global.get_current_time());
+        }
+        
         this._clickHandlerId = global.display.connect('focus-window',
             this._onFocusWindow.bind(this));
     }
@@ -500,17 +517,13 @@ class TcIndicator extends Button {
         if (!this._actor || !this._actor.visible)
             return;
 
-        // 只有在启用点击隐藏时才处理
         if (this._autoHideMode !== 'click' && this._autoHideMode !== 'both')
             return;
 
-        // 检查鼠标是否在翻译窗口内
         if (this._isPointerInsideWindow()) {
-            // 鼠标在窗口内，不隐藏
             return;
         }
 
-        // 鼠标在窗口外，隐藏窗口
         this._close();
     }
 
