@@ -37,6 +37,9 @@
 }
 
 .tc-normal-label {
+    line-height: 1.4;
+    padding: 0px;
+    margin: 0px;
 }
 
 .tc-search-entry {
