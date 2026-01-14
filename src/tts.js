@@ -59,30 +59,30 @@ export class AzureTTS extends GObject.Object {
         session.timeout = 15000;
         */
         let wsUrl = `${wsBaseUrl}?TrustedClientToken=${trustedClientToken}&Sec-MS-GEC=${generateSecMsGecToken()}&Sec-MS-GEC-Version=1-${chromiumFullVersion}`;
-        let message = Soup.Message.new ("GET", wsUrl);
+        let message = Soup.Message.new("GET", wsUrl);
         if (message == null) {
             log("Failed to create Soup message");
             return;
         }
         this._cancellable = new Gio.Cancellable();
         session.websocket_connect_async(message, null, null, 0, this._cancellable,
-                                             (session, result, error) => {
-                                                 if (error) {
-                                                     log('Failed to connect: ' + error.message);
-                                                     return;
-                                                 }
-                                                 this.websocket = session.websocket_connect_finish(result);
-                                                 this._onMessageId = this.websocket.connect('message', (ws, type, msg) => {
-                                                     this._onMessage(type, msg);
-                                                 });
-                                                 this._onClosedId = this.websocket.connect('closed', () => {
-                                                     this._onClosed();
-                                                 });
-                                                 this._onErrorId = this.websocket.connect('error', (ws, error) => {
-                                                     this._onError(error);
-                                                 });
-                                                 this._sendText(text);
-                                             }
+            (session, result, error) => {
+                if (error) {
+                    log('Failed to connect: ' + error.message);
+                    return;
+                }
+                this.websocket = session.websocket_connect_finish(result);
+                this._onMessageId = this.websocket.connect('message', (ws, type, msg) => {
+                    this._onMessage(type, msg);
+                });
+                this._onClosedId = this.websocket.connect('closed', () => {
+                    this._onClosed();
+                });
+                this._onErrorId = this.websocket.connect('error', (ws, error) => {
+                    this._onError(error);
+                });
+                this._sendText(text);
+            }
         );
     }
 
@@ -129,8 +129,8 @@ export class AzureTTS extends GObject.Object {
                     if (!this.f) {
                         this.f = Gio.file_new_for_path('/tmp/test-tts.mp3');
                         let raw = this.f.replace(null, false,
-                                                 Gio.FileCreateFlags.NONE,
-                                                 null);
+                            Gio.FileCreateFlags.NONE,
+                            null);
                         this.out = Gio.BufferedOutputStream.new_sized(raw, 4096 * 10);
                     }
                     this.out.write_bytes(data, null);
@@ -221,8 +221,7 @@ export class AzureTTS extends GObject.Object {
         this._playerState = Gst.State.NULL;
         this._pipeline.set_state(Gst.State.VOID_PENDING);
         this._pipeline.set_state(Gst.State.PAUSED);
-        if (this._watchId)
-        {
+        if (this._watchId) {
             GLib.source_remove(this._watchId);
             this._watchId = 0;
         }
