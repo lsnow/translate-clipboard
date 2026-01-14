@@ -1,21 +1,3 @@
-/* TranslateWindow.js
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * SPDX-License-Identifier: GPL-2.0-or-later
- */
-
 import GObject from 'gi://GObject';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
@@ -55,6 +37,8 @@ export const TranslateWindow = GObject.registerClass(
             this._closeButton = null;
             this._label = null;
             this._resBox = null;
+            this._loadingLabel = null;
+            this._loadingAnimationId = 0;
             this._clickHandlerId = null;
             this._popupTimeoutId = 0;
             this._x = 0;
@@ -63,6 +47,10 @@ export const TranslateWindow = GObject.registerClass(
 
         destroy() {
             this._removeClickHandler();
+            if (this._loadingAnimationId) {
+                GLib.source_remove(this._loadingAnimationId);
+                this._loadingAnimationId = 0;
+            }
             if (this._actor) {
                 this._actor.destroy();
                 this._actor = null;
@@ -71,6 +59,95 @@ export const TranslateWindow = GObject.registerClass(
                 GLib.source_remove(this._popupTimeoutId);
                 this._popupTimeoutId = 0;
             }
+        }
+
+        showLoading(x, y, text) {
+            this._x = x;
+            this._y = y;
+            
+            if (!this._actor) {
+                this._createWindow();
+            }
+            
+            if (text && this._searchEntry) {
+                this._searchEntry.set_text(text);
+            }
+            
+            let monitor = Main.layoutManager.currentMonitor;
+            const { scale_factor: scaleFactor } = St.ThemeContext.get_for_stage(global.stage);
+            
+            let initialX = x;
+            let initialY = y + 10;
+            
+            if (initialX + 150 > monitor.x + monitor.width) {
+                initialX = monitor.x + monitor.width - 150;
+            }
+            if (initialY + 100 > monitor.y + monitor.height) {
+                initialY = monitor.y + monitor.height - 100;
+            }
+            
+            this._actor.set_position(initialX, initialY);
+            this._actor.show();
+            
+            if (this._autoClose) {
+                this._closeButton.hide();
+                this._box.reactive = false;
+            } else {
+                this._closeButton.show();
+                this._box.reactive = true;
+            }
+            
+            if (this._popupTimeoutId) {
+                GLib.source_remove(this._popupTimeoutId);
+                this._popupTimeoutId = 0;
+            }
+            
+            if (this._label) {
+                this._label.destroy();
+                this._label = null;
+            }
+            if (this._resBox) {
+                this._resBox.destroy();
+                this._resBox = null;
+            }
+            if (this._loadingLabel) {
+                this._loadingLabel.destroy();
+                this._loadingLabel = null;
+            }
+            
+            this._loadingLabel = new St.Label({
+                text: _("翻译中"),
+                style_class: 'tc-loading-text',
+                x_align: Clutter.ActorAlign.CENTER,
+                y_align: Clutter.ActorAlign.CENTER
+            });
+            this._loadingLabel.clutter_text.set_line_wrap(true);
+            this._loadingLabel.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+            this._box.add_child(this._loadingLabel);
+            
+            if (this._loadingAnimationId) {
+                GLib.source_remove(this._loadingAnimationId);
+                this._loadingAnimationId = 0;
+            }
+            
+            let dotCount = 0;
+            this._loadingAnimationId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 500, () => {
+                if (!this._loadingLabel || !this._loadingLabel.get_parent()) {
+                    this._loadingAnimationId = 0;
+                    return GLib.SOURCE_REMOVE;
+                }
+                dotCount = (dotCount + 1) % 4;
+                let dots = '.'.repeat(dotCount);
+                this._loadingLabel.text = _("翻译中") + dots;
+                return GLib.SOURCE_CONTINUE;
+            });
+            GLib.Source.set_name_by_id(this._loadingAnimationId, '[gnome-shell] TranslateWindow.loadingAnimation');
+            
+            this._scroll.set_style(
+                'max-height: %spx; max-width: %spx;'.format(monitor.height / scaleFactor / 2,
+                    monitor.width / scaleFactor / 2));
+            
+            this._updateHideBehavior();
         }
 
         showResult(result, x, y) {
@@ -94,7 +171,6 @@ export const TranslateWindow = GObject.registerClass(
                 this._popupTimeoutId = 0;
             }
             
-            // 清理旧的翻译结果
             if (this._label) {
                 this._label.destroy();
                 this._label = null;
@@ -103,8 +179,15 @@ export const TranslateWindow = GObject.registerClass(
                 this._resBox.destroy();
                 this._resBox = null;
             }
+            if (this._loadingLabel) {
+                this._loadingLabel.destroy();
+                this._loadingLabel = null;
+            }
+            if (this._loadingAnimationId) {
+                GLib.source_remove(this._loadingAnimationId);
+                this._loadingAnimationId = 0;
+            }
             
-            // 显示新的翻译结果
             if (!this._dump) {
                 this._label = new St.Label();
                 this._label.clutter_text.set_line_wrap(true);
@@ -176,34 +259,43 @@ export const TranslateWindow = GObject.registerClass(
             });
             this._scroll.add_child(this._box);
 
-            // 添加查词输入框
             let searchBox = new St.BoxLayout({
                 style_class: 'tc-search-box'
             });
             this._searchEntry = new St.Entry({
                 hint_text: _("输入要查询的文本..."),
-                x_expand: true
+                style_class: 'tc-search-entry'
             });
+            
+            // 设置左侧图标（翻译图标）
+            let translateIcon = new St.Icon({
+                gicon: Gio.icon_new_for_string(`${this._extension.path}/icons/translator-symbolic.svg`),
+                style_class: 'popup-menu-icon',
+            });
+            this._searchEntry.set_primary_icon(translateIcon);
+            
+            // 设置右侧图标（搜索图标）
             let searchIcon = new St.Icon({
-                style_class: 'tc-search-icon',
+                gicon: Gio.icon_new_for_string(`${this._extension.path}/icons/search.svg`),
+                style_class: 'popup-menu-icon',
             });
-            searchIcon.gicon = Gio.icon_new_for_string(`${this._extension.path}/icons/search.svg`);
-            let searchButton = new St.Button({
-                style_class: 'tc-search-button',
-                child: searchIcon
+            this._searchEntry.set_secondary_icon(searchIcon);
+            
+            // 监听图标点击事件
+            this._searchEntry.connect('primary-icon-clicked', () => {
+                this._onSearchTranslate();
             });
-            searchBox.add_child(this._searchEntry);
-            searchBox.add_child(searchButton);
-            this._box.add_child(searchBox);
-
+            this._searchEntry.connect('secondary-icon-clicked', () => {
+                this._onSearchTranslate();
+            });
+            
             // 监听回车键
             this._searchEntry.clutter_text.connect('activate', () => {
                 this._onSearchTranslate();
             });
-            // 监听按钮点击
-            searchButton.connect('clicked', () => {
-                this._onSearchTranslate();
-            });
+            
+            searchBox.add_child(this._searchEntry);
+            this._box.add_child(searchBox);
 
             let closeIcon = new St.Icon({
                 icon_name: 'window-close-symbolic',
@@ -243,6 +335,14 @@ export const TranslateWindow = GObject.registerClass(
             if (this._resBox) {
                 this._resBox.destroy();
                 this._resBox = null;
+            }
+            if (this._loadingLabel) {
+                this._loadingLabel.destroy();
+                this._loadingLabel = null;
+            }
+            if (this._loadingAnimationId) {
+                GLib.source_remove(this._loadingAnimationId);
+                this._loadingAnimationId = 0;
             }
         }
 
@@ -290,6 +390,10 @@ export const TranslateWindow = GObject.registerClass(
             if (this._resBox) {
                 this._resBox.destroy();
                 this._resBox = null;
+            }
+            if (this._loadingLabel) {
+                this._loadingLabel.destroy();
+                this._loadingLabel = null;
             }
             this._popupTimeoutId = 0;
             return GLib.SOURCE_REMOVE;
@@ -537,20 +641,18 @@ export const TranslateWindow = GObject.registerClass(
         _onSearchTranslate() {
             let text = this._searchEntry.text;
             if (text && text.trim() != '') {
-                // 如果窗口已经显示，保持当前位置；否则跟随指针
+                let trimmedText = text.trim();
                 if (this._actor && this._actor.visible) {
                     let [x, y] = this._actor.get_position();
                     this._x = x;
-                    this._y = y - 10; // 减去之前添加的偏移量
+                    this._y = y - 10;
                 } else {
-                    // 跟随指针位置
                     [this._x, this._y] = global.get_pointer();
                 }
+                this.showLoading(this._x, this._y, trimmedText);
                 if (this._translateCallback) {
-                    this._translateCallback(text.trim());
+                    this._translateCallback(trimmedText);
                 }
-                // 清空输入框
-                this._searchEntry.set_text('');
             }
         }
     });

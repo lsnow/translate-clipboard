@@ -1,21 +1,3 @@
-/* TcIndicator.js
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * SPDX-License-Identifier: GPL-2.0-or-later
- */
-
 import GObject from 'gi://GObject';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
@@ -150,7 +132,6 @@ export const TcIndicator = GObject.registerClass(
             this._tts = new AzureTTS(null);
             this._tts.engine = this._ttsEngine;
             
-            // 创建翻译窗口
             this._translateWindow = new TranslateWindow({
                 extension: this._extension,
                 tts: this._tts,
@@ -204,7 +185,6 @@ export const TcIndicator = GObject.registerClass(
             this._proxy = this._settings.get_string(Fields.PROXY);
             this._engine = this._settings.get_string(Fields.ENGINE);
 
-            // 更新翻译窗口设置
             if (this._translateWindow) {
                 this._translateWindow.updateSettings({
                     engine: this._engine,
@@ -236,7 +216,6 @@ export const TcIndicator = GObject.registerClass(
             this._removeKeybindings();
             this._setupKeybindings();
             
-            // 断开之前的连接
             if (this._translator && this._translateCompleted) {
                 this._translator.disconnect(this._translateCompleted);
                 this._translateCompleted = null;
@@ -284,7 +263,24 @@ export const TcIndicator = GObject.registerClass(
 
         _translateSelected() {
             let [x, y, mods] = global.get_pointer();
-            this._clipboardChanged();
+            [this._x, this._y] = [x, y];
+            this._clipboard.get_text(St.ClipboardType.PRIMARY,
+                (clipboard, text) => {
+                    if (text && text != '' &&
+                        text[0] != '/' &&
+                        !Util.findUrls(text).length &&
+                        !RegExp(/^[\.\s\d\-]+$/).exec(text)) {
+                        this._oldtext = text;
+                        if (this._translateWindow) {
+                            this._translateWindow.showLoading(this._x, this._y, text);
+                        }
+                        this._translate(text);
+                    } else {
+                        if (this._translateWindow && this._translateWindow._actor) {
+                            this._translateWindow._close();
+                        }
+                    }
+                });
         }
 
         _watchClipboard() {
@@ -307,6 +303,7 @@ export const TcIndicator = GObject.registerClass(
         }
 
         _clipboardChanged() {
+            [this._x, this._y] = global.get_pointer();
             this._clipboard.get_text(St.ClipboardType.PRIMARY,
                 (clipboard, text) => {
                     if (text && text != '' &&
@@ -315,8 +312,14 @@ export const TcIndicator = GObject.registerClass(
                         !Util.findUrls(text).length &&
                         !RegExp(/^[\.\s\d\-]+$/).exec(text)) {
                         this._oldtext = text;
-                        [this._x, this._y] = global.get_pointer();
+                        if (this._translateWindow) {
+                            this._translateWindow.showLoading(this._x, this._y, text);
+                        }
                         this._translate(text);
+                    } else {
+                        if (this._translateWindow && this._translateWindow._actor) {
+                            this._translateWindow._close();
+                        }
                     }
                 });
         }

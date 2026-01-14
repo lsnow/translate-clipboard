@@ -39,17 +39,10 @@
 .tc-normal-label {
 }
 
-.tc-search-button {
-    padding: 8px;
-    border-radius: 4px;
-    background-color: transparent;
+.tc-search-entry {
+    min-width: 300px;
 }
 
-.tc-search-button:hover {
-    background-color: rgba(125, 125, 125, 0.5);
-}
-
-.tc-search-icon {
-    color: white;
-    icon-size: 20px;
+.tc-search-entry .popup-menu-icon {
+    icon-size: 16px;
 }
