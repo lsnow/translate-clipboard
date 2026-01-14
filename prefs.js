@@ -8,9 +8,10 @@ import Gtk from 'gi://Gtk';
 import Adw from 'gi://Adw';
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-import {providers as Providers} from './llm.js';
-import * as Voices from './voices.js';
-import * as Utils from './utils.js';
+import {providers as Providers} from './src/llm.js';
+import * as Voices from './src/config/voices.js';
+import * as Utils from './src/utils.js';
+import {Fields, defaultConfig} from './src/config/constants.js';
 
 class GeneralPage extends Adw.PreferencesPage {
     static {
@@ -164,7 +165,7 @@ class GeneralPage extends Adw.PreferencesPage {
     }
 
     _addKeybindingRow(){
-        const current = this._settings.get_strv(Utils.Fields.TRANS_SELECTED)[0];
+        const current = this._settings.get_strv(Fields.TRANS_SELECTED)[0];
         const [ok, key, mods] = Gtk.accelerator_parse(current);
         const accelString = ok ? Gtk.accelerator_name(key, mods) : "";
         const shortcutLabel = new Gtk.Label({
@@ -185,7 +186,7 @@ class GeneralPage extends Adw.PreferencesPage {
         });
 
         editButton.connect('clicked', () => {
-            this._editShortcut(Utils.Fields.TRANS_SELECTED, row, shortcutLabel);
+            this._editShortcut(Fields.TRANS_SELECTED, row, shortcutLabel);
         });
         row.add_suffix(shortcutLabel);
         row.add_suffix(editButton);
@@ -580,11 +581,11 @@ class AiPage extends Adw.PreferencesPage {
         const params = configs[this._provider] ?? {};
         const endpoint = params.endpoint || Providers[this._provider].endpoint;
         const model = params.model || Providers[this._provider].models[0] || '';
-        const temperature = params.temperature ?? Utils.defaultConfig.temperature;
-        const topP = params.topP ?? Utils.defaultConfig.topP;
-        const topK = params.topK ?? Utils.defaultConfig.topK;
-        const minP = params.minP ?? Utils.defaultConfig.minP;
-        const prompt = params.prompt ?? Utils.defaultConfig.prompt;
+        const temperature = params.temperature ?? defaultConfig.temperature;
+        const topP = params.topP ?? defaultConfig.topP;
+        const topK = params.topK ?? defaultConfig.topK;
+        const minP = params.minP ?? defaultConfig.minP;
+        const prompt = params.prompt ?? defaultConfig.prompt;
 
         const schema = this._settings.schema_id;
         Utils.getApiKey(schema, this._provider,
