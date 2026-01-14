@@ -304,6 +304,35 @@ export const TcIndicator = GObject.registerClass(
                 });
                 this._scroll.add_child(this._box);
 
+                // 添加查词输入框
+                let searchBox = new St.BoxLayout({
+                    style_class: 'tc-search-box'
+                });
+                this._searchEntry = new St.Entry({
+                    hint_text: _("输入要查询的文本..."),
+                    x_expand: true
+                });
+                let searchIcon = new St.Icon({
+                    style_class: 'tc-search-icon',
+                });
+                searchIcon.gicon = Gio.icon_new_for_string(`${this._extension.path}/icons/search.svg`);
+                let searchButton = new St.Button({
+                    style_class: 'tc-search-button',
+                    child: searchIcon
+                });
+                searchBox.add_child(this._searchEntry);
+                searchBox.add_child(searchButton);
+                this._box.add_child(searchBox);
+
+                // 监听回车键
+                this._searchEntry.clutter_text.connect('activate', () => {
+                    this._onSearchTranslate();
+                });
+                // 监听按钮点击
+                searchButton.connect('clicked', () => {
+                    this._onSearchTranslate();
+                });
+
                 let closeIcon = new St.Icon({
                     icon_name: 'window-close-symbolic',
                     icon_size: 24
@@ -341,6 +370,16 @@ export const TcIndicator = GObject.registerClass(
                 GLib.source_remove(this._popupTimeoutId);
                 this._popupTimeoutId = 0;
             }
+            // 清理旧的翻译结果
+            if (this._label) {
+                this._label.destroy();
+                this._label = null;
+            }
+            if (this._resBox) {
+                this._resBox.destroy();
+                this._resBox = null;
+            }
+            // 显示新的翻译结果
             if (!this._dump) {
                 this._label = new St.Label();
                 this._label.clutter_text.set_line_wrap(true);
@@ -708,6 +747,24 @@ export const TcIndicator = GObject.registerClass(
                 log('Failed with error ' + error + ' @ ' + error.lineNumber);
                 log(error.stack);
                 notify(IndicatorName, 'Failed with error ' + error);
+            }
+        }
+
+        _onSearchTranslate() {
+            let text = this._searchEntry.text;
+            if (text && text.trim() != '') {
+                // 如果窗口已经显示，保持当前位置；否则跟随指针
+                if (this._actor && this._actor.visible) {
+                    let [x, y] = this._actor.get_position();
+                    this._x = x;
+                    this._y = y - 10; // 减去之前添加的偏移量
+                } else {
+                    // 跟随指针位置
+                    [this._x, this._y] = global.get_pointer();
+                }
+                this._translate(text.trim());
+                // 清空输入框
+                this._searchEntry.set_text('');
             }
         }
 

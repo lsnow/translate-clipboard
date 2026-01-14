@@ -38,3 +38,18 @@
 
 .tc-normal-label {
 }
+
+.tc-search-button {
+    padding: 8px;
+    border-radius: 4px;
+    background-color: transparent;
+}
+
+.tc-search-button:hover {
+    background-color: rgba(125, 125, 125, 0.5);
+}
+
+.tc-search-icon {
+    color: white;
+    icon-size: 20px;
+}
