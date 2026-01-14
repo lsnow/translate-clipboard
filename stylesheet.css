@@ -5,7 +5,7 @@
     color: #fff;
 }
 .translate-box {
-    padding: 16px 5px 0 16px;
+    padding: 16px 16px 0 16px;
 }
 
 .tc-title-label {
@@ -40,7 +40,7 @@
 }
 
 .tc-search-entry {
-    min-width: 300px;
+    width: 100%;
 }
 
 .tc-search-entry .popup-menu-icon {

@@ -79,11 +79,15 @@ export const TranslateWindow = GObject.registerClass(
             let initialX = x;
             let initialY = y + 10;
             
-            if (initialX + 150 > monitor.x + monitor.width) {
-                initialX = monitor.x + monitor.width - 150;
-            }
-            if (initialY + 100 > monitor.y + monitor.height) {
-                initialY = monitor.y + monitor.height - 100;
+            // 设置固定宽度，高度使用最大高度
+            const fixedWidth = 400;
+            const maxHeight = monitor.height / scaleFactor / 2;
+            this._actor.set_width(fixedWidth);
+            this._scroll.set_style('width: %spx; max-height: %spx;'.format(fixedWidth, maxHeight));
+            
+            // 调整位置，确保窗口不会超出屏幕
+            if (initialX + fixedWidth > monitor.x + monitor.width) {
+                initialX = monitor.x + monitor.width - fixedWidth;
             }
             
             this._actor.set_position(initialX, initialY);
@@ -123,6 +127,7 @@ export const TranslateWindow = GObject.registerClass(
             });
             this._loadingLabel.clutter_text.set_line_wrap(true);
             this._loadingLabel.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+            this._loadingLabel.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
             this._box.add_child(this._loadingLabel);
             
             if (this._loadingAnimationId) {
@@ -142,10 +147,6 @@ export const TranslateWindow = GObject.registerClass(
                 return GLib.SOURCE_CONTINUE;
             });
             GLib.Source.set_name_by_id(this._loadingAnimationId, '[gnome-shell] TranslateWindow.loadingAnimation');
-            
-            this._scroll.set_style(
-                'max-height: %spx; max-width: %spx;'.format(monitor.height / scaleFactor / 2,
-                    monitor.width / scaleFactor / 2));
             
             this._updateHideBehavior();
         }
@@ -192,6 +193,7 @@ export const TranslateWindow = GObject.registerClass(
                 this._label = new St.Label();
                 this._label.clutter_text.set_line_wrap(true);
                 this._label.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+                this._label.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
                 this._box.add_child(this._label);
                 this._label.clutter_text.set_markup(result);
             } else {
@@ -200,17 +202,22 @@ export const TranslateWindow = GObject.registerClass(
 
             let monitor = Main.layoutManager.currentMonitor;
             const { scale_factor: scaleFactor } = St.ThemeContext.get_for_stage(global.stage);
-            this._scroll.set_style(
-                'max-height: %spx; max-width: %spx;'.format(monitor.height / scaleFactor / 2,
-                    monitor.width / scaleFactor / 2));
-            let natWidth = this._scroll.get_preferred_width(-1)[1];
-            if (x + natWidth > monitor.x + monitor.width) {
-                x = monitor.x + monitor.width - natWidth;
+            
+            // 设置固定宽度，高度使用最大高度
+            const fixedWidth = 400;
+            const maxHeight = monitor.height / scaleFactor / 2;
+            this._actor.set_width(fixedWidth);
+            this._scroll.set_style('width: %spx; max-height: %spx;'.format(fixedWidth, maxHeight));
+            
+            // 调整位置，确保窗口不会超出屏幕
+            if (x + fixedWidth > monitor.x + monitor.width) {
+                x = monitor.x + monitor.width - fixedWidth;
             }
-
+            
+            // 计算实际高度并调整位置
             let natHeight = this._scroll.get_preferred_height(-1)[1];
             if (y + 10 + natHeight > monitor.y + monitor.height) {
-                y = monitor.y + monitor.height - natHeight;
+                y = monitor.y + monitor.height - natHeight - 10;
             }
 
             this._actor.set_position(x, y + 10);
@@ -247,7 +254,7 @@ export const TranslateWindow = GObject.registerClass(
             this._actor = new St.Widget();
             this._scroll = new St.ScrollView({
                 style_class: "translate-scroll",
-                hscrollbar_policy: St.PolicyType.AUTOMATIC,
+                hscrollbar_policy: St.PolicyType.NEVER,
                 vscrollbar_policy: St.PolicyType.AUTOMATIC,
             });
             this._actor.add_child(this._scroll);
@@ -264,7 +271,8 @@ export const TranslateWindow = GObject.registerClass(
             });
             this._searchEntry = new St.Entry({
                 hint_text: _("输入要查询的文本..."),
-                style_class: 'tc-search-entry'
+                style_class: 'tc-search-entry',
+                x_expand: true
             });
             
             // 设置左侧图标（翻译图标）
@@ -508,6 +516,10 @@ export const TranslateWindow = GObject.registerClass(
             return result;
         }
 
+        /**
+         * @param {*} result hello: [[["你好","hello",null,null,10],[null,null,"Nǐ hǎo","həˈlō"]],[["interjection",["你好!","喂!"],[["你好!",["Hello!","Hi!","Hallo!"],null,0.13323711],["喂!",["Hey!","Hello!"],null,0.020115795]],"Hello!",9]],"en",null,null,[["hello",null,[["你好",null,true,false,[10]],["您好",null,true,false,[10]],["嗨",null,true,false,[8]]],[[0,5]],"hello",0,0]],1,[],[["en"],null,[1],["en"]],null,null,null,[["exclamation",[["used as a greeting or to begin a phone conversation.","m_en_gbus0460730.012","hello there, Katie!"]],"hello",17],["noun",[["an utterance of “hello”; a greeting.","m_en_gbus0460730.025","she was getting polite nods and hellos from people"]],"hello",1],["verb",[["say or shout “hello”; greet someone.","m_en_gbus0460730.034","I pressed the phone button and helloed"]],"hello",2]],[[["<b>hello</b> there, Katie!",null,null,null,null,"m_en_gbus0460730.012"]]],null,null,null,null,[null,2]]
+         * @returns 
+         */
         _parseResult(result) {
             if (this._resBox) {
                 this._resBox.destroy();
@@ -528,6 +540,7 @@ export const TranslateWindow = GObject.registerClass(
                     });
                     label.clutter_text.set_line_wrap(true);
                     label.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+                    label.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
                     label.clutter_text.set_markup(this._md2pango(result));
                     label.connect('button-press-event', () => {
                         this._tts.playAudio(result);
@@ -537,96 +550,129 @@ export const TranslateWindow = GObject.registerClass(
                 }
 
                 let json = JSON.parse(result);
-                let t = '';
-                let f = '';
-                let t012 = json[0][1][2];
-                let t013 = json[0][1][3];
-                for (let k in json[0]) {
-                    let tk = json[0][k];
-                    if (tk[1]) {
-                        let tk1 = tk[1].replace(/\n/g, '');
-                        if (k > 0)
-                            f += '\n';
-                        f += tk1;
+                
+                // json[0] 是翻译结果数组，包含多个翻译选项
+                // json[0][0] 是翻译文本数组，如 ["你好","hello",null,null,10]
+                // json[0][1] 是音标信息数组，如 [null,null,"Nǐ hǎo","həˈlō"]
+                // json[0][1][2] 是拼音/音标，如 "Nǐ hǎo"
+                // json[0][1][3] 是音标符号，如 "həˈlō"
+                // json[1] 是词性、例句等详细信息
+                // json[2] 是源语言代码，如 "en"
+                
+                let translatedText = '';  // 翻译后的文本
+                let originalText = '';    // 原始文本
+                let phoneticSymbol = json[0][1][2];  // 拼音/音标，如 "Nǐ hǎo"
+                let phoneticNotation = json[0][1][3]; // 音标符号，如 "həˈlō"
+                
+                // 遍历翻译结果数组，提取原始文本和翻译文本
+                for (let translationIndex in json[0]) {
+                    let translationItem = json[0][translationIndex];
+                    // translationItem[1] 是原始文本
+                    if (translationItem[1]) {
+                        let originalTextPart = translationItem[1].replace(/\n/g, '');
+                        if (translationIndex > 0)
+                            originalText += '\n';
+                        originalText += originalTextPart;
                     }
-                    if (tk[0]) {
-                        let tk0 = tk[0].replace(/\n/g, '');
-                        if (k > 0)
-                            t += '\n';
-                        t += tk0;
+                    // translationItem[0] 是翻译文本
+                    if (translationItem[0]) {
+                        let translatedTextPart = translationItem[0].replace(/\n/g, '');
+                        if (translationIndex > 0)
+                            translatedText += '\n';
+                        translatedText += translatedTextPart;
                     }
                 }
-                let l013 = new St.Label({
-                    text: f + (t013 ? ' /' + t013 + '/' : ''),
+                
+                // 创建原始文本标签（带音标）
+                let originalTextLabel = new St.Label({
+                    text: originalText + (phoneticNotation ? ' /' + phoneticNotation + '/' : ''),
                     style_class: 'tc-title-label',
                     track_hover: true,
                     reactive: true,
                 });
-                l013.clutter_text.set_line_wrap(true);
-                l013.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
-                l013.connect('button-press-event', () => {
-                    this._tts.playAudio(f);
+                originalTextLabel.clutter_text.set_line_wrap(true);
+                originalTextLabel.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+                originalTextLabel.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
+                originalTextLabel.connect('button-press-event', () => {
+                    this._tts.playAudio(originalText);
                 });
 
-                let l012 = new St.Label({
-                    text: t + '\n(' + t012 + ')',
+                // 创建翻译文本标签（带拼音）
+                let translatedTextLabel = new St.Label({
+                    text: translatedText + '\n(' + phoneticSymbol + ')',
                     style_class: 'tc-title-label',
                     track_hover: true,
                     reactive: true,
                 });
-                l012.clutter_text.set_line_wrap(true);
-                l012.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
-                l012.connect('button-press-event', () => {
-                    this._tts.playAudio(t);
+                translatedTextLabel.clutter_text.set_line_wrap(true);
+                translatedTextLabel.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+                translatedTextLabel.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
+                translatedTextLabel.connect('button-press-event', () => {
+                    this._tts.playAudio(translatedText);
                 });
 
-                let rtl1 = this._isRtl(json[2]);
-                if (rtl1) {
-                    l013.add_style_pseudo_class('rtl');
+                // 检查文本方向（RTL）
+                let sourceLanguageCode = json[2];
+                let isSourceRtl = this._isRtl(sourceLanguageCode);
+                if (isSourceRtl) {
+                    originalTextLabel.add_style_pseudo_class('rtl');
                 }
-                let to = this._toEntry.get_text();
-                if (to == 'auto')
-                    to = this._locale;
-                let rtl2 = this._isRtl(to);
-                if (rtl2) {
-                    l012.add_style_pseudo_class('rtl');
+                
+                let targetLanguageCode = this._toEntry.get_text();
+                if (targetLanguageCode == 'auto')
+                    targetLanguageCode = this._locale;
+                let isTargetRtl = this._isRtl(targetLanguageCode);
+                if (isTargetRtl) {
+                    translatedTextLabel.add_style_pseudo_class('rtl');
                 }
 
-                let summary = new St.BoxLayout({
+                // 创建摘要区域（包含原始文本和翻译文本）
+                let summaryBox = new St.BoxLayout({
                     vertical: true,
                     track_hover: false,
                     reactive: true,
                     style_class: 'tc-section-box'
                 });
-                summary.add_child(l013);
-                summary.add_child(l012);
-                this._resBox.add_child(summary);
+                summaryBox.add_child(originalTextLabel);
+                summaryBox.add_child(translatedTextLabel);
+                this._resBox.add_child(summaryBox);
 
                 if (this._briefMode)
                     return;
 
-                let t1 = json[1];
-                if (t1) {
-                    for (let k in t1) {
-                        let t1k = t1[k];
-                        if (t1k) {
-                            let t1k0 = new St.Label({
-                                text: t1k[0],
+                // 显示详细的词性、例句等信息
+                let detailedInfo = json[1];
+                if (detailedInfo) {
+                    for (let partOfSpeechIndex in detailedInfo) {
+                        let partOfSpeechData = detailedInfo[partOfSpeechIndex];
+                        if (partOfSpeechData) {
+                            // partOfSpeechData[0] 是词性，如 "interjection", "noun", "verb"
+                            let partOfSpeechLabel = new St.Label({
+                                text: partOfSpeechData[0],
                                 style_class: 'tc-section-label'
                             });
-                            this._resBox.add_child(t1k0);
-                            let ttn = t1k[2];
-                            for (let i in ttn) {
-                                let ttni0 = ttn[i][0];
-                                let ttni1 = '';
-                                for (let j in ttn[i][1]) {
-                                    if (j == 0)
-                                        ttni1 += ttn[i][1][j];
+                            partOfSpeechLabel.clutter_text.set_line_wrap(true);
+                            partOfSpeechLabel.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+                            partOfSpeechLabel.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
+                            this._resBox.add_child(partOfSpeechLabel);
+                            
+                            // partOfSpeechData[2] 是例句数组
+                            let exampleSentences = partOfSpeechData[2];
+                            for (let exampleIndex in exampleSentences) {
+                                let exampleSentence = exampleSentences[exampleIndex];
+                                // exampleSentence[0] 是例句原文
+                                let exampleOriginal = exampleSentence[0];
+                                // exampleSentence[1] 是例句翻译数组
+                                let exampleTranslations = exampleSentence[1];
+                                let exampleTranslationsText = '';
+                                for (let translationIndex in exampleTranslations) {
+                                    if (translationIndex == 0)
+                                        exampleTranslationsText += exampleTranslations[translationIndex];
                                     else
-                                        ttni1 += ', ' + ttn[i][1][j];
+                                        exampleTranslationsText += ', ' + exampleTranslations[translationIndex];
                                 }
-                                let ttniLabel = this._createLabelWidget(ttni0, ttni1, rtl2, rtl1);
-                                this._resBox.add_child(ttniLabel);
+                                let exampleLabel = this._createLabelWidget(exampleOriginal, exampleTranslationsText, isTargetRtl, isSourceRtl);
+                                this._resBox.add_child(exampleLabel);
                             }
                         }
                     }
