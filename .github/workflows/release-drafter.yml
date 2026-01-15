@@ -1,0 +1,42 @@
+name: Release Drafter
+
+on:
+  push:
+    # branches to consider in the event; optional, defaults to all
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  update_release:
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+      - name: Release drafter
+        id: release_drafter
+        uses: release-drafter/release-drafter@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          publish: true
+      - name: Get datetime and version
+        id: generate_datetime_and_version
+        run: |
+          datetime=$(date +'%Y%m%d%H%M%S');
+          echo "datetime=${datetime}" >> "$GITHUB_OUTPUT";
+          echo "version=translate-clipboard_${{ steps.release_drafter.outputs.name }}_${datetime}" >> "$GITHUB_OUTPUT";
+      - name: Package
+        run: |
+          bash ./package.sh ${{ steps.generate_datetime_and_version.outputs.version }};
+      - name: Upload assert
+        id: release_upload
+        uses: shogo82148/actions-upload-release-asset@v1
+        with:
+          upload_url: ${{steps.release_drafter.outputs.upload_url}}
+          asset_path: ${{ steps.generate_datetime_and_version.outputs.version }}.zip
