@@ -16,7 +16,7 @@ export const TranslateWindow = GObject.registerClass(
     class TranslateWindow extends GObject.Object {
         _init(params) {
             super._init();
-            
+
             this._extension = params.extension;
             this._tts = params.tts;
             this._engine = params.engine || 'google';
@@ -29,7 +29,7 @@ export const TranslateWindow = GObject.registerClass(
             this._toEntry = params.toEntry;
             this._translateCallback = params.translateCallback;
             this._isRtl = params.isRtl;
-            
+
             this._actor = null;
             this._scroll = null;
             this._box = null;
@@ -64,35 +64,33 @@ export const TranslateWindow = GObject.registerClass(
         showLoading(x, y, text) {
             this._x = x;
             this._y = y;
-            
+
             if (!this._actor) {
                 this._createWindow();
             }
-            
+
             if (text && this._searchEntry) {
                 this._searchEntry.set_text(text);
             }
-            
+
             let monitor = Main.layoutManager.currentMonitor;
             const { scale_factor: scaleFactor } = St.ThemeContext.get_for_stage(global.stage);
-            
+
             let initialX = x;
             let initialY = y + 10;
-            
-            // 设置固定宽度，高度使用最大高度
+
             const fixedWidth = 400;
             const maxHeight = monitor.height / scaleFactor / 2;
             this._actor.set_width(fixedWidth);
             this._scroll.set_style('width: %spx; max-height: %spx;'.format(fixedWidth, maxHeight));
-            
-            // 调整位置，确保窗口不会超出屏幕
+
             if (initialX + fixedWidth > monitor.x + monitor.width) {
                 initialX = monitor.x + monitor.width - fixedWidth;
             }
-            
+
             this._actor.set_position(initialX, initialY);
             this._actor.show();
-            
+
             if (this._autoClose) {
                 this._closeButton?.hide();
                 this._box.reactive = false;
@@ -100,12 +98,12 @@ export const TranslateWindow = GObject.registerClass(
                 this._closeButton?.show();
                 this._box.reactive = true;
             }
-            
+
             if (this._popupTimeoutId) {
                 GLib.source_remove(this._popupTimeoutId);
                 this._popupTimeoutId = 0;
             }
-            
+
             if (this._label) {
                 this._label.destroy();
                 this._label = null;
@@ -118,7 +116,7 @@ export const TranslateWindow = GObject.registerClass(
                 this._loadingLabel.destroy();
                 this._loadingLabel = null;
             }
-            
+
             this._loadingLabel = new St.Label({
                 text: _("翻译中"),
                 style_class: 'tc-loading-text',
@@ -129,12 +127,12 @@ export const TranslateWindow = GObject.registerClass(
             this._loadingLabel.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
             this._loadingLabel.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
             this._box.add_child(this._loadingLabel);
-            
+
             if (this._loadingAnimationId) {
                 GLib.source_remove(this._loadingAnimationId);
                 this._loadingAnimationId = 0;
             }
-            
+
             let dotCount = 0;
             this._loadingAnimationId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 500, () => {
                 if (!this._loadingLabel || !this._loadingLabel.get_parent()) {
@@ -147,18 +145,18 @@ export const TranslateWindow = GObject.registerClass(
                 return GLib.SOURCE_CONTINUE;
             });
             GLib.Source.set_name_by_id(this._loadingAnimationId, '[gnome-shell] TranslateWindow.loadingAnimation');
-            
+
             this._updateHideBehavior();
         }
 
         showResult(result, x, y) {
             this._x = x;
             this._y = y;
-            
+
             if (!this._actor) {
                 this._createWindow();
             }
-            
+
             if (this._autoClose) {
                 this._closeButton?.hide();
                 this._box.reactive = false;
@@ -166,12 +164,12 @@ export const TranslateWindow = GObject.registerClass(
                 this._closeButton?.show();
                 this._box.reactive = true;
             }
-            
+
             if (this._popupTimeoutId) {
                 GLib.source_remove(this._popupTimeoutId);
                 this._popupTimeoutId = 0;
             }
-            
+
             if (this._label) {
                 this._label.destroy();
                 this._label = null;
@@ -188,7 +186,7 @@ export const TranslateWindow = GObject.registerClass(
                 GLib.source_remove(this._loadingAnimationId);
                 this._loadingAnimationId = 0;
             }
-            
+
             if (!this._dump) {
                 this._label = new St.Label();
                 this._label.clutter_text.set_line_wrap(true);
@@ -202,19 +200,16 @@ export const TranslateWindow = GObject.registerClass(
 
             let monitor = Main.layoutManager.currentMonitor;
             const { scale_factor: scaleFactor } = St.ThemeContext.get_for_stage(global.stage);
-            
-            // 设置固定宽度，高度使用最大高度
+
             const fixedWidth = 400;
             const maxHeight = monitor.height / scaleFactor / 2;
             this._actor.set_width(fixedWidth);
             this._scroll.set_style('width: %spx; max-height: %spx;'.format(fixedWidth, maxHeight));
-            
-            // 调整位置，确保窗口不会超出屏幕
+
             if (x + fixedWidth > monitor.x + monitor.width) {
                 x = monitor.x + monitor.width - fixedWidth;
             }
-            
-            // 计算实际高度并调整位置
+
             let natHeight = this._scroll.get_preferred_height(-1)[1];
             if (y + 10 + natHeight > monitor.y + monitor.height) {
                 y = monitor.y + monitor.height - natHeight - 10;
@@ -244,7 +239,7 @@ export const TranslateWindow = GObject.registerClass(
             if (params.locale !== undefined) {
                 this._locale = params.locale;
             }
-            
+
             if (this._actor && this._actor.visible) {
                 this._updateHideBehavior();
             }
@@ -303,21 +298,21 @@ export const TranslateWindow = GObject.registerClass(
                 style_class: 'tc-search-entry',
                 x_expand: true
             });
-            
+
             // 设置左侧图标（翻译图标）
             let translateIcon = new St.Icon({
                 gicon: Gio.icon_new_for_string(`${this._extension.path}/icons/translator-symbolic.svg`),
                 style_class: 'popup-menu-icon',
             });
             this._searchEntry.set_primary_icon(translateIcon);
-            
+
             // 设置右侧图标（搜索图标）
             let searchIcon = new St.Icon({
                 gicon: Gio.icon_new_for_string(`${this._extension.path}/icons/search.svg`),
                 style_class: 'popup-menu-icon',
             });
             this._searchEntry.set_secondary_icon(searchIcon);
-            
+
             // 监听图标点击事件
             this._searchEntry.connect('primary-icon-clicked', () => {
                 this._onSearchTranslate();
@@ -325,12 +320,12 @@ export const TranslateWindow = GObject.registerClass(
             this._searchEntry.connect('secondary-icon-clicked', () => {
                 this._onSearchTranslate();
             });
-            
+
             // 监听回车键
             this._searchEntry.clutter_text.connect('activate', () => {
                 this._onSearchTranslate();
             });
-            
+
             searchBox.add_child(this._searchEntry);
             this._box.add_child(searchBox);
 
@@ -499,12 +494,19 @@ export const TranslateWindow = GObject.registerClass(
         }
 
         _createLabelWidget(str1, str2, rtl1, rtl2) {
-            let box = new St.BoxLayout({ vertical: false});
+            let box = new St.BoxLayout(
+                {
+                    style_class: 'tc-normal-label-box',
+                    vertical: false,
+                });
+            // let baseline = '线';
             let label1 = new St.Label({
                 text: str1 + ' : ',
                 style_class: 'tc-normal-label',
                 y_align: Clutter.ActorAlign.START,
             });
+            // label1.clutter_text.set_use_markup(true);
+            // label1.clutter_text.set_markup(`${str1+ ' : '}<span alpha="1">${baseline}</span>`);
             label1.clutter_text.set_line_wrap(true);
             label1.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
             label1.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
@@ -513,6 +515,8 @@ export const TranslateWindow = GObject.registerClass(
                 style_class: 'tc-normal-label',
                 y_align: Clutter.ActorAlign.START,
             });
+            // label2.clutter_text.set_use_markup(true);
+            // label2.clutter_text.set_markup(`<span alpha="1">${baseline}</span>${str2}`);
             label2.clutter_text.set_line_wrap(true);
             label2.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
             label2.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
@@ -621,7 +625,7 @@ export const TranslateWindow = GObject.registerClass(
                 }
 
                 let json = JSON.parse(result);
-                
+
                 // json[0] 是翻译结果数组，包含多个翻译选项
                 // json[0][0] 是翻译文本数组，如 ["你好","hello",null,null,10]
                 // json[0][1] 是音标信息数组，如 [null,null,"Nǐ hǎo","həˈlō"]
@@ -629,12 +633,12 @@ export const TranslateWindow = GObject.registerClass(
                 // json[0][1][3] 是音标符号，如 "həˈlō"
                 // json[1] 是词性、例句等详细信息
                 // json[2] 是源语言代码，如 "en"
-                
+
                 let translatedText = '';  // 翻译后的文本
                 let originalText = '';    // 原始文本
                 let phoneticSymbol = json[0][1][2];  // 拼音/音标，如 "Nǐ hǎo"
                 let phoneticNotation = json[0][1][3]; // 音标符号，如 "həˈlō"
-                
+
                 // 遍历翻译结果数组，提取原始文本和翻译文本
                 for (let translationIndex in json[0]) {
                     let translationItem = json[0][translationIndex];
@@ -653,7 +657,7 @@ export const TranslateWindow = GObject.registerClass(
                         translatedText += translatedTextPart;
                     }
                 }
-                
+
                 // 创建原始文本标签（带音标）
                 let originalTextLabel = new St.Label({
                     text: originalText + (phoneticNotation ? ' /' + phoneticNotation + '/' : ''),
@@ -690,7 +694,7 @@ export const TranslateWindow = GObject.registerClass(
                 if (isSourceRtl) {
                     originalTextLabel.add_style_pseudo_class('rtl');
                 }
-                
+
                 let targetLanguageCode = this._toEntry.get_text();
                 if (targetLanguageCode == 'auto')
                     targetLanguageCode = this._locale;
@@ -728,7 +732,7 @@ export const TranslateWindow = GObject.registerClass(
                             partOfSpeechLabel.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
                             partOfSpeechLabel.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
                             this._resBox.add_child(partOfSpeechLabel);
-                            
+
                             // partOfSpeechData[2] 是例句数组
                             let exampleSentences = partOfSpeechData[2];
                             for (let exampleIndex in exampleSentences) {

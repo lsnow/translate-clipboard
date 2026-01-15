@@ -48,9 +48,11 @@
 }
 
 .tc-normal-label {
-    line-height: 1.4;
-    padding: 0px;
-    margin: 0px;
+    font-family: "Sarasa Gothic";
+}
+
+.tc-normal-label-box {
+    margin-bottom: 1px;
 }
 
 .tc-search-entry {
