@@ -1,11 +1,23 @@
 /* Add your custom extension styling here */
+.translate-window {
+    border-radius: 12px;
+    background-color: rgba(32, 32, 32, 1);
+}
+
 .translate-scroll {
     background-color: rgba(32, 32, 32, 1);
-    border-radius: 5px;
+    border-radius: 12px;
     color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.32);
 }
+
+.translate-scroll {
+    opacity: 0;
+    width: 0px;
+}
+
 .translate-box {
-    padding: 16px 16px 0 16px;
+    margin: 16px 12px 12px 16px;
 }
 
 .tc-title-label {
@@ -20,8 +32,7 @@
     border-radius: 5px;
     */
 }
-.tc-section-box:hover,
-.tc-title-label:hover {
+.tc-section-box:hover {
     background-color: rgba(125, 125, 125, 1);
 }
 
@@ -44,8 +55,40 @@
 
 .tc-search-entry {
     width: 100%;
+    margin: 0 0 8px 0;
 }
 
 .tc-search-entry .popup-menu-icon {
     icon-size: 16px;
+}
+
+.tc-text-with-play {
+    spacing: 6px;
+    width: 100%;
+}
+
+.tc-text-with-play .tc-title-label {
+    flex: 1;
+}
+
+.tc-play-button {
+    padding: 0px;
+    border-radius: 14px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    max-width: 28px;
+    max-height: 28px;
+    background-color: rgba(125, 125, 125, 0.3);
+}
+
+.tc-play-button:hover {
+    background-color: rgba(125, 125, 125, 0.6);
+}
+
+.tc-play-button .popup-menu-icon {
+    icon-size: 16px;
+    color: #fff;
+    padding: 6px;
 }

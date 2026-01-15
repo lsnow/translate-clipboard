@@ -94,10 +94,10 @@ export const TranslateWindow = GObject.registerClass(
             this._actor.show();
             
             if (this._autoClose) {
-                this._closeButton.hide();
+                this._closeButton?.hide();
                 this._box.reactive = false;
             } else {
-                this._closeButton.show();
+                this._closeButton?.show();
                 this._box.reactive = true;
             }
             
@@ -160,10 +160,10 @@ export const TranslateWindow = GObject.registerClass(
             }
             
             if (this._autoClose) {
-                this._closeButton.hide();
+                this._closeButton?.hide();
                 this._box.reactive = false;
             } else {
-                this._closeButton.show();
+                this._closeButton?.show();
                 this._box.reactive = true;
             }
             
@@ -251,12 +251,41 @@ export const TranslateWindow = GObject.registerClass(
         }
 
         _createWindow() {
-            this._actor = new St.Widget();
+            this._actor = new St.Widget({
+                style_class: 'translate-window'
+            });
             this._scroll = new St.ScrollView({
                 style_class: "translate-scroll",
                 hscrollbar_policy: St.PolicyType.NEVER,
                 vscrollbar_policy: St.PolicyType.AUTOMATIC,
             });
+
+            let hideScrollbar = () => {
+                if (!this._scroll) return;
+                let children = this._scroll.get_children();
+                for (let i = 0; i < children.length; i++) {
+                    let child = children[i];
+                    if (child instanceof St.ScrollBar) {
+                        child.hide();
+                        child.set_opacity(0);
+                    }
+                }
+            };
+
+            this._scroll.connect('notify::visible', () => {
+                if (this._scroll.visible) {
+                    GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                        hideScrollbar();
+                        return GLib.SOURCE_REMOVE;
+                    });
+                }
+            });
+
+            GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                hideScrollbar();
+                return GLib.SOURCE_REMOVE;
+            });
+
             this._actor.add_child(this._scroll);
             this._box = new St.BoxLayout({
                 style_class: "translate-box",
@@ -470,15 +499,23 @@ export const TranslateWindow = GObject.registerClass(
         }
 
         _createLabelWidget(str1, str2, rtl1, rtl2) {
-            let box = new St.BoxLayout({ vertical: rtl1 || rtl2 });
+            let box = new St.BoxLayout({ vertical: false});
             let label1 = new St.Label({
                 text: str1 + ' : ',
-                style_class: 'tc-normal-label'
+                style_class: 'tc-normal-label',
+                y_align: Clutter.ActorAlign.START,
             });
+            label1.clutter_text.set_line_wrap(true);
+            label1.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+            label1.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
             let label2 = new St.Label({
                 text: str2,
-                style_class: 'tc-normal-label'
+                style_class: 'tc-normal-label',
+                y_align: Clutter.ActorAlign.START,
             });
+            label2.clutter_text.set_line_wrap(true);
+            label2.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+            label2.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
             if (rtl1)
                 label1.add_style_pseudo_class('rtl');
             if (rtl2)
@@ -487,6 +524,40 @@ export const TranslateWindow = GObject.registerClass(
             box.add_child(label2);
 
             return box;
+        }
+
+        _createPlayButton(text) {
+            let playIcon = new St.Icon({
+                gicon: Gio.icon_new_for_string(`${this._extension.path}/icons/play.svg`),
+                style_class: 'popup-menu-icon',
+                icon_size: 20
+            });
+            let playButton = new St.Button({
+                style_class: 'tc-play-button',
+                child: playIcon,
+                x_expand: false,
+                y_expand: false,
+                x_align: Clutter.ActorAlign.START,
+                y_align: Clutter.ActorAlign.CENTER,
+            });
+            playButton.set_width(28);
+            playButton.set_height(28);
+            playButton.connect('clicked', () => {
+                this._tts.playAudio(text);
+            });
+            return playButton;
+        }
+
+        _createTextWithPlayButton(label, text) {
+            let playButton = this._createPlayButton(text);
+            let textBox = new St.BoxLayout({
+                vertical: false,
+                style_class: 'tc-text-with-play',
+                x_expand: true
+            });
+            textBox.add_child(label);
+            textBox.add_child(playButton);
+            return textBox;
         }
 
         /* parse markdown to pango markup */
@@ -588,28 +659,30 @@ export const TranslateWindow = GObject.registerClass(
                     text: originalText + (phoneticNotation ? ' /' + phoneticNotation + '/' : ''),
                     style_class: 'tc-title-label',
                     track_hover: true,
-                    reactive: true,
+                    reactive: false,
+                    x_expand: false,
                 });
                 originalTextLabel.clutter_text.set_line_wrap(true);
                 originalTextLabel.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
                 originalTextLabel.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
-                originalTextLabel.connect('button-press-event', () => {
-                    this._tts.playAudio(originalText);
-                });
+
+                // 创建原始文本水平布局（包含播放按钮）
+                let originalTextBox = this._createTextWithPlayButton(originalTextLabel, originalText);
 
                 // 创建翻译文本标签（带拼音）
                 let translatedTextLabel = new St.Label({
                     text: translatedText + '\n(' + phoneticSymbol + ')',
                     style_class: 'tc-title-label',
                     track_hover: true,
-                    reactive: true,
+                    reactive: false,
+                    x_expand: false,
                 });
                 translatedTextLabel.clutter_text.set_line_wrap(true);
                 translatedTextLabel.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
                 translatedTextLabel.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
-                translatedTextLabel.connect('button-press-event', () => {
-                    this._tts.playAudio(translatedText);
-                });
+
+                // 创建翻译文本水平布局（包含播放按钮）
+                let translatedTextBox = this._createTextWithPlayButton(translatedTextLabel, translatedText);
 
                 // 检查文本方向（RTL）
                 let sourceLanguageCode = json[2];
@@ -633,8 +706,8 @@ export const TranslateWindow = GObject.registerClass(
                     reactive: true,
                     style_class: 'tc-section-box'
                 });
-                summaryBox.add_child(originalTextLabel);
-                summaryBox.add_child(translatedTextLabel);
+                summaryBox.add_child(originalTextBox);
+                summaryBox.add_child(translatedTextBox);
                 this._resBox.add_child(summaryBox);
 
                 if (this._briefMode)
