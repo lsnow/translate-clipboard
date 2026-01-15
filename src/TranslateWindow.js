@@ -25,8 +25,7 @@ export const TranslateWindow = GObject.registerClass(
             this._autoClose = params.autoClose !== undefined ? params.autoClose : true;
             this._autoHideMode = params.autoHideMode || 'timeout';
             this._locale = params.locale || 'en';
-            this._fromEntry = params.fromEntry;
-            this._toEntry = params.toEntry;
+            this._settings = params.settings;
             this._translateCallback = params.translateCallback;
             this._isRtl = params.isRtl;
 
@@ -552,15 +551,17 @@ export const TranslateWindow = GObject.registerClass(
             return playButton;
         }
 
-        _createTextWithPlayButton(label, text) {
-            let playButton = this._createPlayButton(text);
+        _createTextWithPlayButton(label, text, showPlayButton = true) {
             let textBox = new St.BoxLayout({
                 vertical: false,
                 style_class: 'tc-text-with-play',
                 x_expand: true
             });
             textBox.add_child(label);
-            textBox.add_child(playButton);
+            if (showPlayButton) {
+                let playButton = this._createPlayButton(text);
+                textBox.add_child(playButton);
+            }
             return textBox;
         }
 
@@ -670,12 +671,13 @@ export const TranslateWindow = GObject.registerClass(
                 originalTextLabel.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
                 originalTextLabel.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
 
-                // 创建原始文本水平布局（包含播放按钮）
-                let originalTextBox = this._createTextWithPlayButton(originalTextLabel, originalText);
+                // 创建原始文本水平布局（包含播放按钮，仅在存在音标时显示）
+                let hasPhoneticNotation = phoneticNotation && phoneticNotation !== null;
+                let originalTextBox = this._createTextWithPlayButton(originalTextLabel, originalText, hasPhoneticNotation);
 
                 // 创建翻译文本标签（带拼音）
                 let translatedTextLabel = new St.Label({
-                    text: translatedText + '\n(' + phoneticSymbol + ')',
+                    text: translatedText + (phoneticSymbol ? '\n(' + phoneticSymbol + ')' : ''),
                     style_class: 'tc-title-label',
                     track_hover: true,
                     reactive: false,
@@ -685,8 +687,9 @@ export const TranslateWindow = GObject.registerClass(
                 translatedTextLabel.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
                 translatedTextLabel.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
 
-                // 创建翻译文本水平布局（包含播放按钮）
-                let translatedTextBox = this._createTextWithPlayButton(translatedTextLabel, translatedText);
+                // 创建翻译文本水平布局（包含播放按钮，仅在存在拼音时显示）
+                let hasPhoneticSymbol = phoneticSymbol && phoneticSymbol !== null;
+                let translatedTextBox = this._createTextWithPlayButton(translatedTextLabel, translatedText, hasPhoneticSymbol);
 
                 // 检查文本方向（RTL）
                 let sourceLanguageCode = json[2];
@@ -695,8 +698,12 @@ export const TranslateWindow = GObject.registerClass(
                     originalTextLabel.add_style_pseudo_class('rtl');
                 }
 
-                let targetLanguageCode = this._toEntry.get_text();
-                if (targetLanguageCode == 'auto')
+                // 从设置中获取目标语言
+                let targetLanguageCode = this._settings.get_string('to-primary') || 
+                                         this._settings.get_string('to-secondary') ||
+                                         this._settings.get_string('to') ||
+                                         this._locale;
+                if (targetLanguageCode == 'auto' || targetLanguageCode == '')
                     targetLanguageCode = this._locale;
                 let isTargetRtl = this._isRtl(targetLanguageCode);
                 if (isTargetRtl) {

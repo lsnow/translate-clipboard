@@ -6,6 +6,8 @@ export const Fields = {
     AUTO_HIDE_MODE: 'auto-hide-mode',
     FROM: 'from',
     TO: 'to',
+    TO_PRIMARY: 'to-primary',
+    TO_SECONDARY: 'to-secondary',
     TRANS_SELECTED: 'translate-selected-text',
     TTS_ENGINE: 'voice',
     PROXY: 'proxy',

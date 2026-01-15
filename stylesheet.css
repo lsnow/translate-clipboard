@@ -94,3 +94,14 @@
     color: #fff;
     padding: 6px;
 }
+
+.tc-language-label {
+    padding-left: 0px;
+    margin-left: 0px;
+}
+
+.tc-language-value {
+    padding-left: 0px;
+    margin-left: 0px;
+    font-size: 0.9em;
+}

@@ -55,7 +55,7 @@ export var isoLangs = {
     /*
     "av":{
         "name":"Avaric",
-        "nativeName":"авар мацӀ, магӀарул мацӀ"
+        "nativeName":"авар мацӀ"
     },
     "ae":{
         "name":"Avestan",
@@ -76,7 +76,7 @@ export var isoLangs = {
     },
     "eu":{
         "name":"Basque",
-        "nativeName":"euskara, euskera"
+        "nativeName":"euskara"
     },
     "be":{
         "name":"Belarusian",
@@ -113,7 +113,7 @@ export var isoLangs = {
         "nativeName":"ဗမာစာ"
     },
     "ca":{
-        "name":"Catalan; Valencian",
+        "name":"Catalan",
         "nativeName":"Català"
     },
     /*
@@ -127,24 +127,24 @@ export var isoLangs = {
     },
     */
     "ny":{
-        "name":"Chichewa; Chewa; Nyanja",
-        "nativeName":"chiCheŵa, chinyanja"
+        "name":"Chichewa",
+        "nativeName":"chiCheŵa"
     },
     "zh":{
         "name":"Chinese",
-        "nativeName":"中文 (Zhōngwén), 汉语, 漢語, 简体中"
+        "nativeName":"中文"
     },
     "zh-CN":{
         "name":"Chinese (Simplified)",
-        "nativeName":"中文 (Zhōngwén), 汉语, 漢語, 简体中"
+        "nativeName":"简体中文"
     },
     "zh-HK":{
-        "name":"Chinese (Traditional)",
-        "nativeName":"中文 (Zhōngwén), 汉语, 漢語, 繁体中(香港地区)"
+        "name":"Chinese (Traditional, HK)",
+        "nativeName":"繁體中文"
     },
     "zh-TW":{
-        "name":"Chinese (Traditional)",
-        "nativeName":"中文 (Zhōngwén), 汉语, 漢語, 繁体中(台湾地区)"
+        "name":"Chinese (Traditional, TW)",
+        "nativeName":"繁體中文"
     },
     /*
     "cv":{
@@ -162,7 +162,7 @@ export var isoLangs = {
     */
     "co":{
         "name":"Corsican",
-        "nativeName":"corsu, lingua corsa"
+        "nativeName":"corsu"
     },
     "hr":{
         "name":"Croatian",
@@ -170,19 +170,19 @@ export var isoLangs = {
     },
     "cs":{
         "name":"Czech",
-        "nativeName":"česky, čeština"
+        "nativeName":"česky"
     },
     "da":{
         "name":"Danish",
         "nativeName":"dansk"
     },
     "dv":{
-        "name":"Divehi; Dhivehi; Maldivian;",
+        "name":"Divehi",
         "nativeName":"ދިވެހި"
     },
     "nl":{
         "name":"Dutch",
-        "nativeName":"Nederlands, Vlaams"
+        "nativeName":"Nederlands"
     },
     "en":{
         "name":"English",
@@ -194,7 +194,7 @@ export var isoLangs = {
     },
     "et":{
         "name":"Estonian",
-        "nativeName":"eesti, eesti keel"
+        "nativeName":"eesti"
     },
     "ee":{
         "name":"Ewe",
@@ -210,15 +210,15 @@ export var isoLangs = {
     },
     "fi":{
         "name":"Finnish",
-        "nativeName":"suomi, suomen kieli"
+        "nativeName":"suomi"
     },
     "fr":{
         "name":"French",
-        "nativeName":"français, langue française"
+        "nativeName":"français"
     },
     "ff":{
-        "name":"Fula; Fulah; Pulaar; Pular",
-        "nativeName":"Fulfulde, Pulaar, Pular"
+        "name":"Fula",
+        "nativeName":"Fulfulde"
     },
     "gl":{
         "name":"Galician",
@@ -233,7 +233,7 @@ export var isoLangs = {
         "nativeName":"Deutsch"
     },
     "el":{
-        "name":"Greek, Modern",
+        "name":"Greek",
         "nativeName":"Ελληνικά"
     },
     "gn":{
@@ -245,15 +245,15 @@ export var isoLangs = {
         "nativeName":"ગુજરાતી"
     },
     "ht":{
-        "name":"Haitian; Haitian Creole",
+        "name":"Haitian",
         "nativeName":"Kreyòl ayisyen"
     },
     "ha":{
         "name":"Hausa",
-        "nativeName":"Hausa, هَوُسَ"
+        "nativeName":"Hausa"
     },
     "he":{
-        "name":"Hebrew (modern)",
+        "name":"Hebrew",
         "nativeName":"עברית"
     },
     "hz":{
@@ -262,7 +262,7 @@ export var isoLangs = {
     },
     "hi":{
         "name":"Hindi",
-        "nativeName":"हिन्दी, हिंदी"
+        "nativeName":"हिन्दी"
     },
     "ho":{
         "name":"Hiri Motu",
@@ -282,7 +282,7 @@ export var isoLangs = {
     },
     "ie":{
         "name":"Interlingue",
-        "nativeName":"Originally called Occidental; then Interlingue after WWII"
+        "nativeName":"Originally called Occidental"
     },
     "ga":{
         "name":"Irish",
@@ -294,7 +294,7 @@ export var isoLangs = {
     },
     "ik":{
         "name":"Inupiaq",
-        "nativeName":"Iñupiaq, Iñupiatun"
+        "nativeName":"Iñupiaq"
     },
     "io":{
         "name":"Ido",
@@ -314,15 +314,15 @@ export var isoLangs = {
     },
     "ja":{
         "name":"Japanese",
-        "nativeName":"日本語 (にほんご／にっぽんご)"
+        "nativeName":"日本語"
     },
     "jv":{
         "name":"Javanese",
         "nativeName":"basa Jawa"
     },
     "kl":{
-        "name":"Kalaallisut, Greenlandic",
-        "nativeName":"kalaallisut, kalaallit oqaasii"
+        "name":"Kalaallisut",
+        "nativeName":"kalaallisut"
     },
     "kn":{
         "name":"Kannada",
@@ -334,7 +334,7 @@ export var isoLangs = {
     },
     "ks":{
         "name":"Kashmiri",
-        "nativeName":"कश्मीरी, كشميري‎"
+        "nativeName":"कश्मीरी"
     },
     "kk":{
         "name":"Kazakh",
@@ -345,7 +345,7 @@ export var isoLangs = {
         "nativeName":"ភាសាខ្មែរ"
     },
     "ki":{
-        "name":"Kikuyu, Gikuyu",
+        "name":"Kikuyu",
         "nativeName":"Gĩkũyũ"
     },
     "rw":{
@@ -353,7 +353,7 @@ export var isoLangs = {
         "nativeName":"Ikinyarwanda"
     },
     "ky":{
-        "name":"Kirghiz, Kyrgyz",
+        "name":"Kirghiz",
         "nativeName":"кыргыз тили"
     },
     "kv":{
@@ -366,22 +366,22 @@ export var isoLangs = {
     },
     "ko":{
         "name":"Korean",
-        "nativeName":"한국어 (韓國語), 조선말 (朝鮮語)"
+        "nativeName":"한국어"
     },
     "ku":{
         "name":"Kurdish",
-        "nativeName":"Kurdî, كوردی‎"
+        "nativeName":"Kurdî"
     },
     "kj":{
-        "name":"Kwanyama, Kuanyama",
+        "name":"Kwanyama",
         "nativeName":"Kuanyama"
     },
     "la":{
         "name":"Latin",
-        "nativeName":"latine, lingua latina"
+        "nativeName":"latine"
     },
     "lb":{
-        "name":"Luxembourgish, Letzeburgesch",
+        "name":"Luxembourgish",
         "nativeName":"Lëtzebuergesch"
     },
     "lg":{
@@ -389,7 +389,7 @@ export var isoLangs = {
         "nativeName":"Luganda"
     },
     "li":{
-        "name":"Limburgish, Limburgan, Limburger",
+        "name":"Limburgish",
         "nativeName":"Limburgs"
     },
     "ln":{
@@ -414,7 +414,7 @@ export var isoLangs = {
     },
     "gv":{
         "name":"Manx",
-        "nativeName":"Gaelg, Gailck"
+        "nativeName":"Gaelg"
     },
     "mk":{
         "name":"Macedonian",
@@ -426,7 +426,7 @@ export var isoLangs = {
     },
     "ms":{
         "name":"Malay",
-        "nativeName":"bahasa Melayu, بهاس ملايو‎"
+        "nativeName":"bahasa Melayu"
     },
     "ml":{
         "name":"Malayalam",
@@ -441,7 +441,7 @@ export var isoLangs = {
         "nativeName":"te reo Māori"
     },
     "mr":{
-        "name":"Marathi (Marāṭhī)",
+        "name":"Marathi",
         "nativeName":"मराठी"
     },
     "mh":{
@@ -457,8 +457,8 @@ export var isoLangs = {
         "nativeName":"Ekakairũ Naoero"
     },
     "nv":{
-        "name":"Navajo, Navaho",
-        "nativeName":"Diné bizaad, Dinékʼehǰí"
+        "name":"Navajo",
+        "nativeName":"Diné bizaad"
     },
     "nb":{
         "name":"Norwegian Bokmål",
@@ -497,11 +497,11 @@ export var isoLangs = {
         "nativeName":"Occitan"
     },
     "oj":{
-        "name":"Ojibwe, Ojibwa",
+        "name":"Ojibwe",
         "nativeName":"ᐊᓂᔑᓈᐯᒧᐎᓐ"
     },
     "cu":{
-        "name":"Old Church Slavonic, Church Slavic, Church Slavonic, Old Bulgarian, Old Slavonic",
+        "name":"Church Slavic",
         "nativeName":"ѩзыкъ словѣньскъ"
     },
     "om":{
@@ -513,12 +513,12 @@ export var isoLangs = {
         "nativeName":"ଓଡ଼ିଆ"
     },
     "os":{
-        "name":"Ossetian, Ossetic",
+        "name":"Ossetian",
         "nativeName":"ирон æвзаг"
     },
     "pa":{
-        "name":"Panjabi, Punjabi",
-        "nativeName":"ਪੰਜਾਬੀ, پنجابی‎"
+        "name":"Panjabi",
+        "nativeName":"ਪੰਜਾਬੀ"
     },
     "pi":{
         "name":"Pāli",
@@ -533,7 +533,7 @@ export var isoLangs = {
         "nativeName":"polski"
     },
     "ps":{
-        "name":"Pashto, Pushto",
+        "name":"Pashto",
         "nativeName":"پښتو"
     },
     "pt":{
@@ -542,7 +542,7 @@ export var isoLangs = {
     },
     "qu":{
         "name":"Quechua",
-        "nativeName":"Runa Simi, Kichwa"
+        "nativeName":"Runa Simi"
     },
     "rm":{
         "name":"Romansh",
@@ -553,7 +553,7 @@ export var isoLangs = {
         "nativeName":"kiRundi"
     },
     "ro":{
-        "name":"Romanian, Moldavian, Moldovan",
+        "name":"Romanian",
         "nativeName":"română"
     },
     "ru":{
@@ -561,7 +561,7 @@ export var isoLangs = {
         "nativeName":"русский язык"
     },
     "sa":{
-        "name":"Sanskrit (Saṁskṛta)",
+        "name":"Sanskrit",
         "nativeName":"संस्कृतम्"
     },
     "sc":{
@@ -570,7 +570,7 @@ export var isoLangs = {
     },
     "sd":{
         "name":"Sindhi",
-        "nativeName":"सिन्धी, سنڌي، سندھی‎"
+        "nativeName":"सिन्धी"
     },
     "se":{
         "name":"Northern Sami",
@@ -589,7 +589,7 @@ export var isoLangs = {
         "nativeName":"српски језик"
     },
     "gd":{
-        "name":"Scottish Gaelic; Gaelic",
+        "name":"Scottish Gaelic",
         "nativeName":"Gàidhlig"
     },
     "sn":{
@@ -597,7 +597,7 @@ export var isoLangs = {
         "nativeName":"chiShona"
     },
     "si":{
-        "name":"Sinhala, Sinhalese",
+        "name":"Sinhala",
         "nativeName":"සිංහල"
     },
     "sk":{
@@ -610,15 +610,15 @@ export var isoLangs = {
     },
     "so":{
         "name":"Somali",
-        "nativeName":"Soomaaliga, af Soomaali"
+        "nativeName":"Soomaaliga"
     },
     "st":{
         "name":"Southern Sotho",
         "nativeName":"Sesotho"
     },
     "es":{
-        "name":"Spanish; Castilian",
-        "nativeName":"español, castellano"
+        "name":"Spanish",
+        "nativeName":"español"
     },
     "su":{
         "name":"Sundanese",
@@ -646,7 +646,7 @@ export var isoLangs = {
     },
     "tg":{
         "name":"Tajik",
-        "nativeName":"тоҷикӣ, toğikī, تاجیکی‎"
+        "nativeName":"тоҷикӣ"
     },
     "th":{
         "name":"Thai",
@@ -657,23 +657,23 @@ export var isoLangs = {
         "nativeName":"ትግርኛ"
     },
     "bo":{
-        "name":"Tibetan Standard, Tibetan, Central",
+        "name":"Tibetan Standard",
         "nativeName":"བོད་ཡིག"
     },
     "tk":{
         "name":"Turkmen",
-        "nativeName":"Türkmen, Түркмен"
+        "nativeName":"Türkmen"
     },
     "tl":{
         "name":"Tagalog",
-        "nativeName":"Wikang Tagalog, ᜏᜒᜃᜅ᜔ ᜆᜄᜎᜓᜄ᜔"
+        "nativeName":"Wikang Tagalog"
     },
     "tn":{
         "name":"Tswana",
         "nativeName":"Setswana"
     },
     "to":{
-        "name":"Tonga (Tonga Islands)",
+        "name":"Tonga",
         "nativeName":"faka Tonga"
     },
     "tr":{
@@ -686,7 +686,7 @@ export var isoLangs = {
     },
     "tt":{
         "name":"Tatar",
-        "nativeName":"татарча, tatarça, تاتارچا‎"
+        "nativeName":"татарча"
     },
     "tw":{
         "name":"Twi",
@@ -697,8 +697,8 @@ export var isoLangs = {
         "nativeName":"Reo Tahiti"
     },
     "ug":{
-        "name":"Uighur, Uyghur",
-        "nativeName":"Uyƣurqə, ئۇيغۇرچە‎"
+        "name":"Uighur",
+        "nativeName":"Uyƣurqə"
     },
     "uk":{
         "name":"Ukrainian",
@@ -710,7 +710,7 @@ export var isoLangs = {
     },
     "uz":{
         "name":"Uzbek",
-        "nativeName":"zbek, Ўзбек, أۇزبېك‎"
+        "nativeName":"zbek"
     },
     "ve":{
         "name":"Venda",
@@ -753,8 +753,8 @@ export var isoLangs = {
         "nativeName":"Yorùbá"
     },
     "za":{
-        "name":"Zhuang, Chuang",
-        "nativeName":"Saɯ cueŋƅ, Saw cuengh"
+        "name":"Zhuang",
+        "nativeName":"Saɯ cueŋƅ"
     }
 }
 /*
