@@ -627,9 +627,21 @@ export const TranslateWindow = GObject.registerClass(
 
                 let json = JSON.parse(result);
 
+                // 检查 JSON 结构是否完整
+                if (!json || !json[0] || !Array.isArray(json[0])) {
+                    let errorMsg = _('Invalid translation result format. Please check your language settings.');
+                    throw new Error(errorMsg);
+                }
+                
+                // 检查是否有翻译结果
+                if (json[0].length === 0) {
+                    let errorMsg = _('No translation result. Please check your language settings.');
+                    throw new Error(errorMsg);
+                }
+
                 // json[0] 是翻译结果数组，包含多个翻译选项
                 // json[0][0] 是翻译文本数组，如 ["你好","hello",null,null,10]
-                // json[0][1] 是音标信息数组，如 [null,null,"Nǐ hǎo","həˈlō"]
+                // json[0][1] 是音标信息数组，如 [null,null,"Nǐ hǎo","həˈlō"]（可能不存在）
                 // json[0][1][2] 是拼音/音标，如 "Nǐ hǎo"
                 // json[0][1][3] 是音标符号，如 "həˈlō"
                 // json[1] 是词性、例句等详细信息
@@ -637,12 +649,21 @@ export const TranslateWindow = GObject.registerClass(
 
                 let translatedText = '';  // 翻译后的文本
                 let originalText = '';    // 原始文本
-                let phoneticSymbol = json[0][1][2];  // 拼音/音标，如 "Nǐ hǎo"
-                let phoneticNotation = json[0][1][3]; // 音标符号，如 "həˈlō"
+                // 安全地获取音标信息
+                let phoneticSymbol = null;
+                let phoneticNotation = null;
+                if (json[0][1] && Array.isArray(json[0][1])) {
+                    phoneticSymbol = json[0][1][2] || null;
+                    phoneticNotation = json[0][1][3] || null;
+                }
 
                 // 遍历翻译结果数组，提取原始文本和翻译文本
                 for (let translationIndex in json[0]) {
                     let translationItem = json[0][translationIndex];
+                    // 跳过非数组项（如音标信息数组）
+                    if (!Array.isArray(translationItem)) {
+                        continue;
+                    }
                     // translationItem[1] 是原始文本
                     if (translationItem[1]) {
                         let originalTextPart = translationItem[1].replace(/\n/g, '');
@@ -657,6 +678,12 @@ export const TranslateWindow = GObject.registerClass(
                             translatedText += '\n';
                         translatedText += translatedTextPart;
                     }
+                }
+                
+                // 检查是否成功提取了翻译文本
+                if (!translatedText && !originalText) {
+                    let errorMsg = _('Failed to extract translation. Please check your language settings.');
+                    throw new Error(errorMsg);
                 }
 
                 // 创建原始文本标签（带音标）
@@ -764,7 +791,37 @@ export const TranslateWindow = GObject.registerClass(
             } catch (error) {
                 log('Failed with error ' + error + ' @ ' + error.lineNumber);
                 log(error.stack);
-                notify(IndicatorName, 'Failed with error ' + error);
+                
+                // 显示用户友好的错误提示
+                let errorMsg = error.message || String(error);
+                if (!errorMsg.includes(_('language settings'))) {
+                    errorMsg = _('Translation failed. Please check your language settings and switch to another language.');
+                }
+                notify(IndicatorName, errorMsg);
+                
+                // 显示错误信息在窗口中
+                if (this._resBox) {
+                    this._resBox.destroy();
+                    this._resBox = null;
+                }
+                let errorLabel = new St.Label({
+                    text: errorMsg,
+                    style_class: 'tc-error-label',
+                    x_align: Clutter.ActorAlign.CENTER,
+                    y_align: Clutter.ActorAlign.CENTER
+                });
+                errorLabel.clutter_text.set_line_wrap(true);
+                errorLabel.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
+                errorLabel.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
+                
+                if (!this._resBox) {
+                    this._resBox = new St.BoxLayout({
+                        vertical: true,
+                        style_class: 'tc-result-box'
+                    });
+                    this._box.add_child(this._resBox);
+                }
+                this._resBox.add_child(errorLabel);
             }
         }
 
