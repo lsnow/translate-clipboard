@@ -8,9 +8,11 @@ import Gtk from 'gi://Gtk';
 import Adw from 'gi://Adw';
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-import {providers as Providers} from './llm.js';
-import * as Voices from './voices.js';
-import * as Utils from './utils.js';
+import {providers as Providers} from './src/llm.js';
+import * as Voices from './src/config/voices.js';
+import * as Utils from './src/utils.js';
+import {Fields, defaultConfig} from './src/config/constants.js';
+import * as Languages from './src/languages.js';
 
 class GeneralPage extends Adw.PreferencesPage {
     static {
@@ -40,9 +42,11 @@ class GeneralPage extends Adw.PreferencesPage {
                         label : _('Auto hide'),
                         description: null,
         });
+        this._addAutoHideModeRow();
 
         this._addKeybindingRow();
 
+        this._addLanguageSettingsRow();
         this._addVoicesRow();
         this._addProxyRow();
         this._addEnginesRow();
@@ -163,7 +167,7 @@ class GeneralPage extends Adw.PreferencesPage {
     }
 
     _addKeybindingRow(){
-        const current = this._settings.get_strv(Utils.Fields.TRANS_SELECTED)[0];
+        const current = this._settings.get_strv(Fields.TRANS_SELECTED)[0];
         const [ok, key, mods] = Gtk.accelerator_parse(current);
         const accelString = ok ? Gtk.accelerator_name(key, mods) : "";
         const shortcutLabel = new Gtk.Label({
@@ -184,7 +188,7 @@ class GeneralPage extends Adw.PreferencesPage {
         });
 
         editButton.connect('clicked', () => {
-            this._editShortcut(Utils.Fields.TRANS_SELECTED, row, shortcutLabel);
+            this._editShortcut(Fields.TRANS_SELECTED, row, shortcutLabel);
         });
         row.add_suffix(shortcutLabel);
         row.add_suffix(editButton);
@@ -208,7 +212,7 @@ class GeneralPage extends Adw.PreferencesPage {
         Voices.voices.forEach((v) => {
             voiceList.append(this._getShortName(v.FriendlyName));
         });
-       
+
         row.set_model(voiceList);
         this._onVoiceChanged(row);
 
@@ -225,6 +229,37 @@ class GeneralPage extends Adw.PreferencesPage {
         if (index == -1)
             index = 0;
         row.set_selected(index);
+    }
+
+    _addAutoHideModeRow(){
+        let row = new Adw.ComboRow({
+            title: _('Auto hide mode'),
+            subtitle: _('How to auto hide the translation window')
+        });
+        this._miscGroup.add(row);
+
+        const modeList = new Gtk.StringList;
+        modeList.append(_('Timeout'));
+        modeList.append(_('Click outside'));
+        modeList.append(_('Both'));
+
+        row.set_model(modeList);
+        this._onAutoHideModeChanged(row);
+
+        this._settings.connect('changed::auto-hide-mode', (settings, key) => {
+            this._onAutoHideModeChanged(row);
+        });
+        row.connect('notify::selected', () => {
+            const modes = ['timeout', 'click', 'both'];
+            this._settings.set_string('auto-hide-mode', modes[row.get_selected()]);
+        });
+    }
+
+    _onAutoHideModeChanged(row){
+        const mode = this._settings.get_string('auto-hide-mode') || 'timeout';
+        const modes = ['timeout', 'click', 'both'];
+        const index = modes.indexOf(mode);
+        row.set_selected(index >= 0 ? index : 0);
     }
 
     _addProxyRow(){
@@ -253,7 +288,7 @@ class GeneralPage extends Adw.PreferencesPage {
         const engineList  = new Gtk.StringList;
         engineList.append("Google");
         engineList.append("LLM");
-       
+
         row.set_model(engineList);
         this._onEngineChanged(row);
 
@@ -268,6 +303,119 @@ class GeneralPage extends Adw.PreferencesPage {
         let engine = this._settings.get_string('engine');
         this._engine = engine;
         row.set_selected(engine != 'Google');
+    }
+
+    _addLanguageSettingsRow(){
+        // 创建语言列表
+        const langList = new Gtk.StringList();
+        const langCodes = [];
+        
+        // 添加 "Auto" 选项（用于源语言和主要目标语言）
+        langList.append(_('Auto'));
+        langCodes.push('auto');
+        
+        // 添加所有语言
+        const isoLangs = Languages.isoLangs;
+        const sortedKeys = Object.keys(isoLangs).sort((a, b) => {
+            const nameA = isoLangs[a].name.toLowerCase();
+            const nameB = isoLangs[b].name.toLowerCase();
+            return nameA.localeCompare(nameB);
+        });
+        
+        for (const langCode of sortedKeys) {
+            const lang = isoLangs[langCode];
+            langList.append(`${lang.name} (${langCode})`);
+            langCodes.push(langCode);
+        }
+        
+        // 源语言设置
+        let fromRow = new Adw.ComboRow({
+            title: _('Source language'),
+            subtitle: _('Language code (e.g., en, zh, auto for auto-detect)')
+        });
+        fromRow.set_model(langList);
+        this._miscGroup.add(fromRow);
+        this._onLanguageChanged(fromRow, Fields.FROM, langCodes, true);
+        
+        this._settings.connect('changed::' + Fields.FROM, (settings, key) => {
+            this._onLanguageChanged(fromRow, Fields.FROM, langCodes, true);
+        });
+        fromRow.connect('notify::selected', () => {
+            const selectedIndex = fromRow.get_selected();
+            if (selectedIndex >= 0 && selectedIndex < langCodes.length) {
+                this._settings.set_string(Fields.FROM, langCodes[selectedIndex]);
+            }
+        });
+
+        // 主要目标语言设置
+        let toPrimaryRow = new Adw.ComboRow({
+            title: _('Primary target language'),
+            subtitle: _('Primary target language code (higher priority)')
+        });
+        toPrimaryRow.set_model(langList);
+        this._miscGroup.add(toPrimaryRow);
+        this._onLanguageChanged(toPrimaryRow, Fields.TO_PRIMARY, langCodes, true);
+        
+        this._settings.connect('changed::' + Fields.TO_PRIMARY, (settings, key) => {
+            this._onLanguageChanged(toPrimaryRow, Fields.TO_PRIMARY, langCodes, true);
+        });
+        toPrimaryRow.connect('notify::selected', () => {
+            const selectedIndex = toPrimaryRow.get_selected();
+            if (selectedIndex >= 0 && selectedIndex < langCodes.length) {
+                this._settings.set_string(Fields.TO_PRIMARY, langCodes[selectedIndex]);
+            }
+        });
+
+        // 次要目标语言设置（包含 "None" 选项）
+        const secondaryLangList = new Gtk.StringList();
+        const secondaryLangCodes = [];
+        
+        // 添加 "None" 选项
+        secondaryLangList.append(_('None'));
+        secondaryLangCodes.push('');
+        
+        // 添加所有语言（不包括 "Auto"）
+        for (const langCode of sortedKeys) {
+            const lang = isoLangs[langCode];
+            secondaryLangList.append(`${lang.name} (${langCode})`);
+            secondaryLangCodes.push(langCode);
+        }
+        
+        let toSecondaryRow = new Adw.ComboRow({
+            title: _('Secondary target language'),
+            subtitle: _('Secondary target language code (lower priority, optional)')
+        });
+        toSecondaryRow.set_model(secondaryLangList);
+        this._miscGroup.add(toSecondaryRow);
+        this._onLanguageChanged(toSecondaryRow, Fields.TO_SECONDARY, secondaryLangCodes, false);
+        
+        this._settings.connect('changed::' + Fields.TO_SECONDARY, (settings, key) => {
+            this._onLanguageChanged(toSecondaryRow, Fields.TO_SECONDARY, secondaryLangCodes, false);
+        });
+        toSecondaryRow.connect('notify::selected', () => {
+            const selectedIndex = toSecondaryRow.get_selected();
+            if (selectedIndex >= 0 && selectedIndex < secondaryLangCodes.length) {
+                this._settings.set_string(Fields.TO_SECONDARY, secondaryLangCodes[selectedIndex]);
+            }
+        });
+    }
+
+    _onLanguageChanged(row, field, langCodes, hasAuto) {
+        const currentValue = this._settings.get_string(field) || (hasAuto ? 'auto' : '');
+        let index = langCodes.indexOf(currentValue);
+        if (index === -1) {
+            // 如果找不到，尝试查找默认值
+            if (hasAuto && currentValue === '') {
+                index = langCodes.indexOf('auto');
+            } else if (!hasAuto && currentValue === 'auto') {
+                index = 0; // 选择 "None"
+            } else {
+                index = 0; // 默认选择第一个
+            }
+        }
+        if (index >= 0 && index < langCodes.length) {
+            row.set_selected(index);
+        }
     }
 }
 
@@ -286,7 +434,7 @@ class AiPage extends Adw.PreferencesPage {
         // Create widget for setting provider, model, apikey, temperature, TopP, TopK, MinP, prompt
         this._aiGroup = new Adw.PreferencesGroup();
         this.add(this._aiGroup);
-        
+
         // Provider
         const providerList = new Gtk.StringList();
         Object.values(Providers).forEach(p => {
@@ -548,11 +696,11 @@ class AiPage extends Adw.PreferencesPage {
         const params = configs[this._provider] ?? {};
         const endpoint = params.endpoint || Providers[this._provider].endpoint;
         const model = params.model || Providers[this._provider].models[0] || '';
-        const temperature = params.temperature ?? Utils.defaultConfig.temperature;
-        const topP = params.topP ?? Utils.defaultConfig.topP;
-        const topK = params.topK ?? Utils.defaultConfig.topK;
-        const minP = params.minP ?? Utils.defaultConfig.minP;
-        const prompt = params.prompt ?? Utils.defaultConfig.prompt;
+        const temperature = params.temperature ?? defaultConfig.temperature;
+        const topP = params.topP ?? defaultConfig.topP;
+        const topK = params.topK ?? defaultConfig.topK;
+        const minP = params.minP ?? defaultConfig.minP;
+        const prompt = params.prompt ?? defaultConfig.prompt;
 
         const schema = this._settings.schema_id;
         Utils.getApiKey(schema, this._provider,

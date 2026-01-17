@@ -17,6 +17,22 @@
       </description>
     </key>
 
+    <key name="to-primary" type="s">
+      <default>'auto'</default>
+      <summary>Primary target language</summary>
+      <description>
+          Specify the primary target language (higher priority)
+      </description>
+    </key>
+
+    <key name="to-secondary" type="s">
+      <default>''</default>
+      <summary>Secondary target language</summary>
+      <description>
+          Specify the secondary target language (lower priority)
+      </description>
+    </key>
+
     <key name="enable-trans" type="b">
       <default>false</default>
       <summary>Enable/Disable translation</summary>
@@ -45,6 +61,13 @@
       <summary>Auto close</summary>
       <description>
         Auto close
+      </description>
+    </key>
+    <key name="auto-hide-mode" type="s">
+      <default>'timeout'</default>
+      <summary>Auto hide mode</summary>
+      <description>
+        Auto hide mode: 'click' for click outside to hide, 'timeout' for timeout hide, 'both' for both
       </description>
     </key>
 

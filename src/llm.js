@@ -47,16 +47,16 @@ export const providers = {
             "qwen/qwq-32b:free",
         ],
         endpoint: "https://openrouter.ai/api/v1/chat/completions",
-        getUrl: function(endpoint) {
+        getUrl: function (endpoint) {
             return endpoint;
         },
         signup: "https://openrouter.ai/",
         modelsUri: "https://openrouter.ai/models",
-        getApiKey: function() {
+        getApiKey: function () {
             return GLib.getenv("OPENROUTER_API_KEY");
         }
     },
-    "gemini":{
+    "gemini": {
         name: "Google Gemini",
         models: [
             "gemini-2.0-flash",
@@ -65,11 +65,11 @@ export const providers = {
             "gemini-1.0-pro"
         ],
         endpoint: "",
-        getUrl: function(endpoint, model, api_key) {
+        getUrl: function (endpoint, model, api_key) {
             return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${api_key}`;
         },
         signup: "https://ai.google.dev/tutorials/web_quickstart#set-up-api-key",
-        getApiKey: function() {
+        getApiKey: function () {
             return GLib.getenv("GEMINI_API_KEY");
         },
         parseOutput(output) {
@@ -78,7 +78,7 @@ export const providers = {
             return output;
         }
     },
-    "openai":{
+    "openai": {
         name: "OpenAI",
         models: [
             "o1-mini",
@@ -93,16 +93,16 @@ export const providers = {
         ],
         endpoint: "https://api.openai.com/v1/chat/completions",
         signup: "https://platform.openai.com/api-keys",
-        getApiKey: function() {
+        getApiKey: function () {
             return GLib.getenv("OPENAI_API_KEY");
         }
     },
-    "deepseek":{
+    "deepseek": {
         name: "DeekSeek",
         models: ['deepseek-chat', 'deepseek-reasoner'],
         endpoint: "https://api.deepseek.com/chat/completions",
         signup: "https://platform.deepseek.com/api_keys",
-        getApiKey: function() {
+        getApiKey: function () {
             return GLib.getenv("DEEPSEEK_API_KEY");
         }
     },
@@ -117,7 +117,7 @@ export const providers = {
         }
     },
     */
-    "ollama":{
+    "ollama": {
         name: "Ollama",
         models: [
             "7shi/llama-translate:8b-q4_K_M",
@@ -128,14 +128,14 @@ export const providers = {
         ],
         endpoint: "http://localhost:11434/api/chat",
         signup: "",
-        getApiKey: function() {
+        getApiKey: function () {
             return GLib.getenv("OLLAMA_API_KEY");
         },
-        createMessage: function(model, from, to, text) {
+        createMessage: function (model, from, to, text) {
             return JSON.stringify({
                 "model": model,
                 "messages": [
-                    {"role": "user", "content": text}
+                    { "role": "user", "content": text }
                 ],
                 "stream": false
             });
@@ -146,12 +146,12 @@ export const providers = {
             return output;
         }
     },
-    "custom":{
+    "custom": {
         name: "Custom (compatible with OpenAI)",
         models: [],
         endpoint: "https://",
         signup: "",
-        getApiKey: function() {
+        getApiKey: function () {
             return GLib.getenv("CUSTOM_API_KEY");
         }
     }
@@ -233,8 +233,8 @@ export var AiTranslator = GObject.registerClass({
         let body = JSON.stringify({
             "model": this._model,
             "messages": [
-                {"role": "system", "content": "You are a helpfull assistant."},
-                {"role": "user", "content": prompt}
+                { "role": "system", "content": "You are a helpfull assistant." },
+                { "role": "user", "content": prompt }
             ],
             "stream": false
         });
