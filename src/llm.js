@@ -111,7 +111,7 @@ export const providers = {
         }
     },
     "deepseek": {
-        name: "DeekSeek",
+        name: "DeepSeek",
         models: ['deepseek-v4-flash', 'deepseek-v4-pro'],
         endpoint: "https://api.deepseek.com/chat/completions",
         signup: "https://platform.deepseek.com/api_keys",

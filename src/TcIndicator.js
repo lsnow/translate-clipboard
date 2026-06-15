@@ -177,7 +177,7 @@ export const TcIndicator = GObject.registerClass(
 
             if (from == '')
                 from = 'auto';
-            else
+            else if (from.toLowerCase() != 'auto')
                 from = this._getCode(from);
 
             if (to == '' || to.toLowerCase() == 'auto')
@@ -230,7 +230,10 @@ export const TcIndicator = GObject.registerClass(
         }
 
         _onProviderChanged() {
-            const provider = this._settings.get_string(Fields.LLM_PROVIDER);
+            let provider = this._settings.get_string(Fields.LLM_PROVIDER);
+            // workaround
+            if (provider == 'DeekSeek')
+                provider = 'DeepSeek';
             try {
                 for (const p in Providers) {
                     if (Providers[p].name == provider) {

@@ -19,10 +19,6 @@ export const Fields = {
 export const defaultConfig = {
     'endpoint': '',
     'model': '',
-    'temperature': 0.9,
-    'topP': 0.7,
-    'topK': 20,
-    'minP': 0.0,
-    'prompt': 'Please respect the original meaning, maintain the original format, and rewrite the given content in {destination_language}, if it is a domain-specific term, please explain it briefly:\n{selected_text}'
+    'prompt': 'Translate the following text into {destination_language}. Provide brief explanations for specialized terms in the source text, and include pronunciations for complex words:\n{selected_text}'
 };
 

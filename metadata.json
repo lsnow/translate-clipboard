@@ -7,15 +7,10 @@
   "name": "Translate clipboard",
   "settings-schema": "org.gnome.shell.extensions.translate-clipboard",
   "shell-version": [
-    "45",
-    "46",
-    "47",
-    "48",
     "49",
-    "50",
-    "51"
+    "50"
   ],
   "url": "https://github.com/lsnow/translate-clipboard",
   "uuid": "translate-clipboard@lsnow.github.io",
-  "version": 34
+  "version": 35
 }
