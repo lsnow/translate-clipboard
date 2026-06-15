@@ -58,11 +58,11 @@ export const TcIndicator = GObject.registerClass(
             box.add_child(this._icon);
             this.add_child(box);
 
-            this._createLanguageSelector(Fields.FROM, _("Source language"), 'auto');
-            this._createLanguageSelector(Fields.TO_PRIMARY, _("Primary target language"), 'auto');
-            this._createLanguageSelector(Fields.TO_SECONDARY, _("Secondary target language"), '');
+            this._fromSelector = this._createLanguageSelector(Fields.FROM, _("Source language"), 'auto');
+            this._toPrimarySelector = this._createLanguageSelector(Fields.TO_PRIMARY, _("Primary target language"), 'auto');
+            this._toSecondarySelector = this._createLanguageSelector(Fields.TO_SECONDARY, _("Secondary target language"), '');
 
-            let item = new PopupMenu.PopupSwitchMenuItem(_('Toggle translate'), true, null);
+            let item = new PopupMenu.PopupSwitchMenuItem(_('Monitor the clipboard'), true, null);
             item.connect('toggled', () => {
                 this._enabled = item.state;
                 this._settings.set_boolean(Fields.ENABLE_TRANS, this._enabled);
@@ -196,27 +196,21 @@ export const TcIndicator = GObject.registerClass(
                 toSecondary = this._getCode(toSecondary);
 
             this._toPrimary = toPrimary;
-            this._toSecondary = toSecondary;
-            
+
             // Update the language selector value display
-            if (this._fromSelector && this._fromSelector.valueLabel) {
-                this._updateLanguageSelectorValue(this._fromSelector.valueLabel, from);
+            if (this._fromSelector && this._fromSelector._valueLabel) {
+                this._updateLanguageSelectorValue(this._fromSelector._valueLabel, from);
                 if (this._fromSelector.menuItems) {
-                    this._updateMenuSelection(this._fromSelector.subMenu, this._fromSelector.menuItems, from);
+                    this._updateMenuSelection(this._fromSelector.menuItems, from);
                 }
             }
-            if (this._toPrimarySelector && this._toPrimarySelector.valueLabel) {
-                this._updateLanguageSelectorValue(this._toPrimarySelector.valueLabel, toPrimary);
+            if (this._toPrimarySelector && this._toPrimarySelector._valueLabel) {
+                this._updateLanguageSelectorValue(this._toPrimarySelector._valueLabel, toPrimary);
                 if (this._toPrimarySelector.menuItems) {
-                    this._updateMenuSelection(this._toPrimarySelector.subMenu, this._toPrimarySelector.menuItems, toPrimary);
+                    this._updateMenuSelection(this._toPrimarySelector.menuItems, toPrimary);
                 }
             }
-            if (this._toSecondarySelector && this._toSecondarySelector.valueLabel) {
-                this._updateLanguageSelectorValue(this._toSecondarySelector.valueLabel, toSecondary);
-                if (this._toSecondarySelector.menuItems) {
-                    this._updateMenuSelection(this._toSecondarySelector.subMenu, this._toSecondarySelector.menuItems, toSecondary);
-                }
-            }
+
             this._removeKeybindings();
             this._setupKeybindings();
             
@@ -334,10 +328,9 @@ export const TcIndicator = GObject.registerClass(
                 try {
                     let json = JSON.parse(result);
                     let detectedLang = json[2]; // Google Translate API returns the detected language code
-                    
                     // Select the appropriate target language
                     let targetLang = this._selectTargetLanguage(detectedLang);
-                    
+
                     if (targetLang === null) {
                         if (this._translateWindow) {
                             let [x, y] = [this._x, this._y];
@@ -348,7 +341,7 @@ export const TcIndicator = GObject.registerClass(
                         this._pendingText = null;
                         return;
                     }
-                    
+
                     this._detectingLanguage = false;
                     let text = this._pendingText;
                     this._pendingText = null;
@@ -360,54 +353,12 @@ export const TcIndicator = GObject.registerClass(
                     this._pendingText = null;
                 }
             }
-            
+
             let [x, y] = [this._x, this._y];
             if (this._translateWindow) {
                 this._translateWindow.showResult(result, x, y);
             }
         }
-
-        _selectTargetLanguage(detectedLang) {
-            // Normalize the detected language code (remove the region suffix, e.g. zh-CN -> zh)
-            let detectedBase = detectedLang.split('-')[0];
-            
-            if (this._toPrimary && this._toPrimary !== '') {
-                let primaryBase = this._toPrimary.split('-')[0];
-                if (detectedBase === primaryBase || detectedLang === this._toPrimary) {
-                    if (this._toSecondary && this._toSecondary !== '') {
-                        let secondaryBase = this._toSecondary.split('-')[0];
-                        if (detectedBase === secondaryBase || detectedLang === this._toSecondary) {
-                            return null;
-                        }
-                        return this._toSecondary;
-                    }
-                    return null;
-                }
-                return this._toPrimary;
-            }
-            
-            // If there is no primary target language, check the secondary target language
-            if (this._toSecondary && this._toSecondary !== '') {
-                let secondaryBase = this._toSecondary.split('-')[0];
-                if (detectedBase === secondaryBase || detectedLang === this._toSecondary) {
-                    return null;
-                }
-                return this._toSecondary;
-            }
-            
-            // If there is no target language, use the default to
-            let defaultTo = this._settings.get_string(Fields.TO);
-            if (defaultTo && defaultTo !== 'auto' && defaultTo !== '') {
-                let toBase = defaultTo.split('-')[0];
-                if (detectedBase === toBase || detectedLang === defaultTo) {
-                    return null;
-                }
-                return defaultTo;
-            }
-            
-            return null;
-        }
-
 
         _getLocale() {
             this.locale = GLib.get_language_names()[0];
@@ -425,9 +376,9 @@ export const TcIndicator = GObject.registerClass(
                 let codes = [lang, lang.split('-')[0]];
                 for (let [i, c] of codes.entries()) {
                     let l = Object.keys(isoLangs).find(key =>
-                    ((key.indexOf(c) != -1) ||
-                        (isoLangs[key].name.indexOf(c) != -1) ||
-                        (isoLangs[key].nativeName.indexOf(c) != -1)));
+                      (key.startsWith(c) ||
+                        isoLangs[key].name.startsWith(c) ||
+                        isoLangs[key].nativeName.startsWith(c)));
                     if (l != undefined)
                         return l;
                 }
@@ -446,152 +397,83 @@ export const TcIndicator = GObject.registerClass(
         _createLanguageSelector(field, label, defaultValue) {
             let isoLangs = Languages.isoLangs;
             let currentValue = this._settings.get_string(field) || defaultValue;
-            
+
             let subMenu = new PopupMenu.PopupSubMenuMenuItem(label);
             this.menu.addMenuItem(subMenu);
-            
+
             let subMenuItem = subMenu.actor;
-            let originalLabel = subMenu.label;
-            
-            if (subMenu._arrow) {
-                subMenu._arrow.hide();
-            }
-            
-            let labelWidget = new St.Label({
-                text: label,
-                x_align: Clutter.ActorAlign.START,
-                style_class: 'tc-language-label'
-            });
-            
+
             let valueLabel = new St.Label({
                 text: '',
                 x_align: Clutter.ActorAlign.START,
                 style_class: 'tc-language-value'
             });
-            valueLabel.style = 'font-size: 0.9em;';
-            
-            let arrowIcon = new St.Icon({
-                icon_name: 'pan-down-symbolic',
-                icon_size: 16,
-                style_class: 'tc-language-arrow'
-            });
-            
-            let box = new St.BoxLayout({
-                vertical: false,
-                x_expand: true
-            });
-            
-            if (originalLabel && originalLabel.get_parent()) {
-                originalLabel.get_parent().remove_child(originalLabel);
-            }
-            let children = subMenuItem.get_children();
-            for (let i = 0; i < children.length; i++) {
-                subMenuItem.remove_child(children[i]);
-            }
-            
-            let leftBox = new St.BoxLayout({
-                vertical: true,
-                x_align: Clutter.ActorAlign.START,
-                x_expand: true
-            });
-            leftBox.add_child(labelWidget);
-            leftBox.add_child(valueLabel);
-            
-            arrowIcon.x_expand = false;
-            arrowIcon.x_align = Clutter.ActorAlign.END;
-            
-            box.add_child(leftBox);
-            box.add_child(arrowIcon);
-            
-            box.style = 'padding-left: 0px; margin-left: 0px;';
-            
-            subMenuItem.add_child(box);
-            
-            subMenu.menu.connect('open-state-changed', (menu, isOpen) => {
-                if (isOpen) {
-                    arrowIcon.icon_name = 'pan-up-symbolic';
-                } else {
-                    arrowIcon.icon_name = 'pan-down-symbolic';
-                }
-            });
-            
-            // 存储菜单项引用以便更新选中状态
+
             let menuItems = {};
-            
+
             if (field === Fields.FROM || field === Fields.TO_PRIMARY) {
                 let autoItem = new PopupMenu.PopupMenuItem(_("Auto"));
                 autoItem.connect('activate', () => {
                     this._settings.set_string(field, 'auto');
                     this._updateLanguageSelectorValue(valueLabel, 'auto');
-                    this._updateMenuSelection(subMenu, menuItems, 'auto');
+                    this._updateMenuSelection(menuItems, 'auto');
                     subMenu.menu.close();
                 });
                 subMenu.menu.addMenuItem(autoItem);
                 menuItems['auto'] = autoItem;
             }
-            
+
             if (field === Fields.TO_SECONDARY) {
                 let noneItem = new PopupMenu.PopupMenuItem(_("None"));
                 noneItem.connect('activate', () => {
                     this._settings.set_string(field, '');
                     this._updateLanguageSelectorValue(valueLabel, '');
-                    this._updateMenuSelection(subMenu, menuItems, '');
+                    this._updateMenuSelection(menuItems, '');
                     subMenu.menu.close();
                 });
                 subMenu.menu.addMenuItem(noneItem);
                 menuItems[''] = noneItem;
             }
-            
+
             if (field === Fields.FROM || field === Fields.TO_PRIMARY || field === Fields.TO_SECONDARY) {
                 subMenu.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             }
-            
+
             let langKeys = Object.keys(isoLangs).sort((a, b) => {
                 let nameA = isoLangs[a].name.toLowerCase();
                 let nameB = isoLangs[b].name.toLowerCase();
                 return nameA.localeCompare(nameB);
             });
-            
+
             for (let langCode of langKeys) {
                 let lang = isoLangs[langCode];
-                let displayName = `${lang.name} (${langCode})`;
+                let displayName = `${lang.nativeName} (${langCode})`;
                 let langItem = new PopupMenu.PopupMenuItem(displayName);
                 langItem.connect('activate', () => {
                     this._settings.set_string(field, langCode);
                     this._updateLanguageSelectorValue(valueLabel, langCode);
-                    this._updateMenuSelection(subMenu, menuItems, langCode);
+                    this._updateMenuSelection(menuItems, langCode);
                     subMenu.menu.close();
                 });
                 subMenu.menu.addMenuItem(langItem);
                 menuItems[langCode] = langItem;
             }
-            
-            // 更新显示当前值并标记选中项
+
+            subMenu._valueLabel = valueLabel;
             this._updateLanguageSelectorValue(valueLabel, currentValue);
-            this._updateMenuSelection(subMenu, menuItems, currentValue);
-            
-            // 存储菜单项引用以便后续更新
-            if (field === Fields.FROM) {
-                this._fromSelector = { menuItem: subMenuItem, valueLabel, subMenu, menuItems };
-            } else if (field === Fields.TO_PRIMARY) {
-                this._toPrimarySelector = { menuItem: subMenuItem, valueLabel, subMenu, menuItems };
-            } else if (field === Fields.TO_SECONDARY) {
-                this._toSecondarySelector = { menuItem: subMenuItem, valueLabel, subMenu, menuItems };
-            }
+            this._updateMenuSelection(menuItems, currentValue);
+            return subMenu;
         }
 
-        _updateMenuSelection(subMenu, menuItems, selectedValue) {
-            if (!menuItems) return;
-            
-            // 清除所有菜单项的选中标记
+        _updateMenuSelection (menuItems, selectedValue) {
+            return;
             for (let key in menuItems) {
                 let item = menuItems[key];
                 if (item && item.setOrnament) {
                     item.setOrnament(PopupMenu.Ornament.NONE);
                 }
             }
-            
-            // 标记当前选中的项
+
             let selectedItem = menuItems[selectedValue];
             if (selectedItem && selectedItem.setOrnament) {
                 selectedItem.setOrnament(PopupMenu.Ornament.DOT);
@@ -600,7 +482,7 @@ export const TcIndicator = GObject.registerClass(
 
         _updateLanguageSelectorValue(valueLabel, value) {
             if (!valueLabel) return;
-            
+
             let displayValue = '';
             if (value === '' || value === null) {
                 displayValue = _("None");
@@ -615,40 +497,20 @@ export const TcIndicator = GObject.registerClass(
                     displayValue = value;
                 }
             }
-            
+
             valueLabel.text = displayValue;
         }
 
-
-
         _translate(text) {
             let from = this._settings.get_string(Fields.FROM) || 'auto';
-            
+
             if (from === 'auto' && this._toPrimary && this._toPrimary !== '') {
                 this._detectingLanguage = true;
                 this._pendingText = text;
                 this._translator.translate('auto', this._toPrimary, this._proxy, text);
-            } else if (from === 'auto' && this._toSecondary && this._toSecondary !== '') {
-                this._detectingLanguage = true;
-                this._pendingText = text;
-                this._translator.translate('auto', this._toSecondary, this._proxy, text);
             } else {
-                if (this._toPrimary && this._toPrimary !== '') {
-                    let targetLang = this._selectTargetLanguage(from);
-                    if (targetLang === null) {
-                        if (this._translateWindow) {
-                            let [x, y] = [this._x, this._y];
-                            let originalText = text;
-                            this._translateWindow.showResult(JSON.stringify([[[originalText, originalText, null, null, 0]], null, from]), x, y);
-                        }
-                        return;
-                    }
-                    this._translator.translate(from, targetLang, this._proxy, text);
-                } else {
-                    let targetLang = this._toPrimary || this._settings.get_string(Fields.TO) || this._locale;
-                    this._translator.translate(from, targetLang, this._proxy, text);
-                }
+                let targetLang = this._toPrimary || this._settings.get_string(Fields.TO) || this._locale;
+                this._translator.translate(from, targetLang, this._proxy, text);
             }
         }
     });
-

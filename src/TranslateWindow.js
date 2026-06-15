@@ -117,7 +117,7 @@ export const TranslateWindow = GObject.registerClass(
             }
 
             this._loadingLabel = new St.Label({
-                text: _("翻译中"),
+                text: _("Translating ..."),
                 style_class: 'tc-loading-text',
                 x_align: Clutter.ActorAlign.CENTER,
                 y_align: Clutter.ActorAlign.CENTER
@@ -140,7 +140,7 @@ export const TranslateWindow = GObject.registerClass(
                 }
                 dotCount = (dotCount + 1) % 4;
                 let dots = '.'.repeat(dotCount);
-                this._loadingLabel.text = _("翻译中") + dots;
+                this._loadingLabel.text = _("Translating ...") + dots;
                 return GLib.SOURCE_CONTINUE;
             });
             GLib.Source.set_name_by_id(this._loadingAnimationId, '[gnome-shell] TranslateWindow.loadingAnimation');
@@ -293,26 +293,23 @@ export const TranslateWindow = GObject.registerClass(
                 style_class: 'tc-search-box'
             });
             this._searchEntry = new St.Entry({
-                hint_text: _("输入要查询的文本..."),
+                hint_text: _("Enter the text to query ..."),
                 style_class: 'tc-search-entry',
                 x_expand: true
             });
 
-            // 设置左侧图标（翻译图标）
             let translateIcon = new St.Icon({
                 gicon: Gio.icon_new_for_string(`${this._extension.path}/icons/translator-symbolic.svg`),
                 style_class: 'popup-menu-icon',
             });
             this._searchEntry.set_primary_icon(translateIcon);
 
-            // 设置右侧图标（搜索图标）
             let searchIcon = new St.Icon({
                 gicon: Gio.icon_new_for_string(`${this._extension.path}/icons/search.svg`),
                 style_class: 'popup-menu-icon',
             });
             this._searchEntry.set_secondary_icon(searchIcon);
 
-            // 监听图标点击事件
             this._searchEntry.connect('primary-icon-clicked', () => {
                 this._onSearchTranslate();
             });
@@ -320,7 +317,6 @@ export const TranslateWindow = GObject.registerClass(
                 this._onSearchTranslate();
             });
 
-            // 监听回车键
             this._searchEntry.clutter_text.connect('activate', () => {
                 this._onSearchTranslate();
             });
@@ -498,7 +494,7 @@ export const TranslateWindow = GObject.registerClass(
                     style_class: 'tc-normal-label-box',
                     vertical: false,
                 });
-            // let baseline = '线';
+
             let label1 = new St.Label({
                 text: str1 + ' : ',
                 style_class: 'tc-normal-label',
@@ -627,13 +623,11 @@ export const TranslateWindow = GObject.registerClass(
 
                 let json = JSON.parse(result);
 
-                // 检查 JSON 结构是否完整
                 if (!json || !json[0] || !Array.isArray(json[0])) {
                     let errorMsg = _('Invalid translation result format. Please check your language settings.');
                     throw new Error(errorMsg);
                 }
-                
-                // 检查是否有翻译结果
+
                 if (json[0].length === 0) {
                     let errorMsg = _('No translation result. Please check your language settings.');
                     throw new Error(errorMsg);
@@ -647,9 +641,8 @@ export const TranslateWindow = GObject.registerClass(
                 // json[1] 是词性、例句等详细信息
                 // json[2] 是源语言代码，如 "en"
 
-                let translatedText = '';  // 翻译后的文本
-                let originalText = '';    // 原始文本
-                // 安全地获取音标信息
+                let translatedText = '';
+                let originalText = '';
                 let phoneticSymbol = null;
                 let phoneticNotation = null;
                 if (json[0][1] && Array.isArray(json[0][1])) {
@@ -657,21 +650,19 @@ export const TranslateWindow = GObject.registerClass(
                     phoneticNotation = json[0][1][3] || null;
                 }
 
-                // 遍历翻译结果数组，提取原始文本和翻译文本
                 for (let translationIndex in json[0]) {
                     let translationItem = json[0][translationIndex];
-                    // 跳过非数组项（如音标信息数组）
                     if (!Array.isArray(translationItem)) {
                         continue;
                     }
-                    // translationItem[1] 是原始文本
+
                     if (translationItem[1]) {
                         let originalTextPart = translationItem[1].replace(/\n/g, '');
                         if (translationIndex > 0)
                             originalText += '\n';
                         originalText += originalTextPart;
                     }
-                    // translationItem[0] 是翻译文本
+
                     if (translationItem[0]) {
                         let translatedTextPart = translationItem[0].replace(/\n/g, '');
                         if (translationIndex > 0)
@@ -679,14 +670,12 @@ export const TranslateWindow = GObject.registerClass(
                         translatedText += translatedTextPart;
                     }
                 }
-                
-                // 检查是否成功提取了翻译文本
+
                 if (!translatedText && !originalText) {
                     let errorMsg = _('Failed to extract translation. Please check your language settings.');
                     throw new Error(errorMsg);
                 }
 
-                // 创建原始文本标签（带音标）
                 let originalTextLabel = new St.Label({
                     text: originalText + (phoneticNotation ? ' /' + phoneticNotation + '/' : ''),
                     style_class: 'tc-title-label',
@@ -698,11 +687,9 @@ export const TranslateWindow = GObject.registerClass(
                 originalTextLabel.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
                 originalTextLabel.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
 
-                // 创建原始文本水平布局（包含播放按钮，仅在存在音标时显示）
                 let hasPhoneticNotation = phoneticNotation && phoneticNotation !== null;
                 let originalTextBox = this._createTextWithPlayButton(originalTextLabel, originalText, hasPhoneticNotation);
 
-                // 创建翻译文本标签（带拼音）
                 let translatedTextLabel = new St.Label({
                     text: translatedText + (phoneticSymbol ? '\n(' + phoneticSymbol + ')' : ''),
                     style_class: 'tc-title-label',
@@ -714,18 +701,15 @@ export const TranslateWindow = GObject.registerClass(
                 translatedTextLabel.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
                 translatedTextLabel.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
 
-                // 创建翻译文本水平布局（包含播放按钮，仅在存在拼音时显示）
                 let hasPhoneticSymbol = phoneticSymbol && phoneticSymbol !== null;
                 let translatedTextBox = this._createTextWithPlayButton(translatedTextLabel, translatedText, hasPhoneticSymbol);
 
-                // 检查文本方向（RTL）
                 let sourceLanguageCode = json[2];
                 let isSourceRtl = this._isRtl(sourceLanguageCode);
                 if (isSourceRtl) {
                     originalTextLabel.add_style_pseudo_class('rtl');
                 }
 
-                // 从设置中获取目标语言
                 let targetLanguageCode = this._settings.get_string('to-primary') || 
                                          this._settings.get_string('to-secondary') ||
                                          this._settings.get_string('to') ||
@@ -737,7 +721,6 @@ export const TranslateWindow = GObject.registerClass(
                     translatedTextLabel.add_style_pseudo_class('rtl');
                 }
 
-                // 创建摘要区域（包含原始文本和翻译文本）
                 let summaryBox = new St.BoxLayout({
                     vertical: true,
                     track_hover: false,
@@ -751,7 +734,6 @@ export const TranslateWindow = GObject.registerClass(
                 if (this._briefMode)
                     return;
 
-                // 显示详细的词性、例句等信息
                 let detailedInfo = json[1];
                 if (detailedInfo) {
                     for (let partOfSpeechIndex in detailedInfo) {
@@ -791,15 +773,13 @@ export const TranslateWindow = GObject.registerClass(
             } catch (error) {
                 log('Failed with error ' + error + ' @ ' + error.lineNumber);
                 log(error.stack);
-                
-                // 显示用户友好的错误提示
+
                 let errorMsg = error.message || String(error);
                 if (!errorMsg.includes(_('language settings'))) {
                     errorMsg = _('Translation failed. Please check your language settings and switch to another language.');
                 }
                 notify(IndicatorName, errorMsg);
-                
-                // 显示错误信息在窗口中
+
                 if (this._resBox) {
                     this._resBox.destroy();
                     this._resBox = null;
@@ -813,7 +793,7 @@ export const TranslateWindow = GObject.registerClass(
                 errorLabel.clutter_text.set_line_wrap(true);
                 errorLabel.clutter_text.set_ellipsize(Pango.EllipsizeMode.NONE);
                 errorLabel.clutter_text.set_line_wrap_mode(Pango.WrapMode.WORD);
-                
+
                 if (!this._resBox) {
                     this._resBox = new St.BoxLayout({
                         vertical: true,

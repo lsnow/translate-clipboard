@@ -1,0 +1,246 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the translate-clipboard@lsnow.github.io package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: translate-clipboard@lsnow.github.io\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-17 18:35+0800\n"
+"PO-Revision-Date: 2026-01-17 18:35+0800\n"
+"Last-Translator: lsnow <EMAIL@ADDRESS>\n"
+"Language-Team: lsnow <lsnow@github.io>\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/prefs.js:24
+msgid "General"
+msgstr ""
+
+#: src/prefs.js:34
+msgid "Enable or disable translation"
+msgstr ""
+
+#: src/prefs.js:35
+msgid "Whether to automatically translate selected text"
+msgstr ""
+
+#: src/prefs.js:38 src/TcIndicator.js:73
+msgid "Brief mode"
+msgstr ""
+
+#: src/prefs.js:42
+msgid "Auto hide"
+msgstr ""
+
+#: src/prefs.js:76
+msgid "Cancel"
+msgstr ""
+
+#: src/prefs.js:80
+msgid "Apply"
+msgstr ""
+
+#: src/prefs.js:95
+msgid ""
+"Press the desired shortcut keys.\n"
+"Press Esc to cancel, Backspace to clear current input."
+msgstr ""
+
+#: src/prefs.js:105
+msgid "Press a key..."
+msgstr ""
+
+#: src/prefs.js:122
+msgid "Disabled"
+msgstr ""
+
+#: src/prefs.js:144
+msgid "Cleared (Press Apply)"
+msgstr ""
+
+#: src/prefs.js:187
+msgid "Shortcut keys for translating selected text"
+msgstr ""
+
+#: src/prefs.js:205
+msgid "TTS Voice"
+msgstr ""
+
+#: src/prefs.js:206
+msgid "Text-to-speech"
+msgstr ""
+
+#: src/prefs.js:236
+msgid "Auto hide mode"
+msgstr ""
+
+#: src/prefs.js:237
+msgid "How to auto hide the translation window"
+msgstr ""
+
+#: src/prefs.js:242
+msgid "Timeout"
+msgstr ""
+
+#: src/prefs.js:243
+msgid "Click outside"
+msgstr ""
+
+#: src/prefs.js:244
+msgid "Both"
+msgstr ""
+
+#: src/prefs.js:274
+msgid "Network proxy"
+msgstr ""
+
+#: src/prefs.js:283
+msgid "Engine"
+msgstr ""
+
+#: src/prefs.js:284
+msgid "Translation engine"
+msgstr ""
+
+#: src/prefs.js:314 src/TcIndicator.js:519 src/TcIndicator.js:601
+msgid "Auto"
+msgstr ""
+
+#: src/prefs.js:333 src/TcIndicator.js:61
+msgid "Source language"
+msgstr ""
+
+#: src/prefs.js:334
+msgid "Language code (e.g., en, zh, auto for auto-detect)"
+msgstr ""
+
+#: src/prefs.js:351 src/TcIndicator.js:62
+msgid "Primary target language"
+msgstr ""
+
+#: src/prefs.js:352
+msgid "Primary target language code (higher priority)"
+msgstr ""
+
+#: src/prefs.js:371 src/TcIndicator.js:531 src/TcIndicator.js:599
+msgid "None"
+msgstr ""
+
+#: src/prefs.js:381 src/TcIndicator.js:63
+msgid "Secondary target language"
+msgstr ""
+
+#: src/prefs.js:382
+msgid "Secondary target language code (lower priority, optional)"
+msgstr ""
+
+#: src/prefs.js:422
+msgid "LLM"
+msgstr ""
+
+#: src/prefs.js:437
+msgid "Provider"
+msgstr ""
+
+#: src/prefs.js:438
+msgid "LLM service provider"
+msgstr ""
+
+#: src/prefs.js:444
+msgid "Endpoint"
+msgstr ""
+
+#: src/prefs.js:445
+msgid "Endpoint for the LLM service"
+msgstr ""
+
+#: src/prefs.js:452
+msgid "Undo"
+msgstr ""
+
+#: src/prefs.js:460
+msgid "Model"
+msgstr ""
+
+#: src/prefs.js:461
+msgid "Model name/identifier for the LLM service"
+msgstr ""
+
+#: src/prefs.js:468
+msgid "Next model"
+msgstr ""
+
+#: src/prefs.js:474
+msgid "More models"
+msgstr ""
+
+#: src/prefs.js:483
+msgid "API Key"
+msgstr ""
+
+#: src/prefs.js:491
+msgid "Signup"
+msgstr ""
+
+#: src/prefs.js:499
+msgid "Temperature"
+msgstr ""
+
+#: src/prefs.js:513
+msgid "TopP"
+msgstr ""
+
+#: src/prefs.js:527
+msgid "TopK"
+msgstr ""
+
+#: src/prefs.js:540
+msgid "MinP"
+msgstr ""
+
+#: src/prefs.js:553
+msgid "Prompt template"
+msgstr ""
+
+#: src/prefs.js:575
+msgid "Reset All Settings"
+msgstr ""
+
+#: src/TcIndicator.js:65
+msgid "Toggle translate"
+msgstr ""
+
+#: src/TranslateWindow.js:120 src/TranslateWindow.js:143
+msgid "Translating ..."
+msgstr ""
+
+#: src/TranslateWindow.js:296
+msgid "Enter the text to query ..."
+msgstr ""
+
+#: src/TranslateWindow.js:627
+msgid "Invalid translation result format. Please check your language settings."
+msgstr ""
+
+#: src/TranslateWindow.js:632
+msgid "No translation result. Please check your language settings."
+msgstr ""
+
+#: src/TranslateWindow.js:675
+msgid "Failed to extract translation. Please check your language settings."
+msgstr ""
+
+#: src/TranslateWindow.js:778
+msgid "language settings"
+msgstr ""
+
+#: src/TranslateWindow.js:779
+msgid ""
+"Translation failed. Please check your language settings and switch to "
+"another language."
+msgstr ""

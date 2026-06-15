@@ -8,11 +8,11 @@ import Gtk from 'gi://Gtk';
 import Adw from 'gi://Adw';
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-import {providers as Providers} from './src/llm.js';
-import * as Voices from './src/config/voices.js';
-import * as Utils from './src/utils.js';
-import {Fields, defaultConfig} from './src/config/constants.js';
-import * as Languages from './src/languages.js';
+import * as Voices from './config/voices.js';
+import {Fields, defaultConfig} from './config/constants.js';
+import {providers as Providers} from './llm.js';
+import * as Utils from './utils.js';
+import * as Languages from './languages.js';
 
 class GeneralPage extends Adw.PreferencesPage {
     static {
@@ -306,29 +306,25 @@ class GeneralPage extends Adw.PreferencesPage {
     }
 
     _addLanguageSettingsRow(){
-        // 创建语言列表
         const langList = new Gtk.StringList();
         const langCodes = [];
-        
-        // 添加 "Auto" 选项（用于源语言和主要目标语言）
+
         langList.append(_('Auto'));
         langCodes.push('auto');
-        
-        // 添加所有语言
+
         const isoLangs = Languages.isoLangs;
         const sortedKeys = Object.keys(isoLangs).sort((a, b) => {
-            const nameA = isoLangs[a].name.toLowerCase();
-            const nameB = isoLangs[b].name.toLowerCase();
+            const nameA = isoLangs[a].nativeName.toLowerCase();
+            const nameB = isoLangs[b].nativeName.toLowerCase();
             return nameA.localeCompare(nameB);
         });
-        
+
         for (const langCode of sortedKeys) {
             const lang = isoLangs[langCode];
-            langList.append(`${lang.name} (${langCode})`);
+            langList.append(`${lang.nativeName} (${langCode})`);
             langCodes.push(langCode);
         }
-        
-        // 源语言设置
+
         let fromRow = new Adw.ComboRow({
             title: _('Source language'),
             subtitle: _('Language code (e.g., en, zh, auto for auto-detect)')
@@ -336,7 +332,7 @@ class GeneralPage extends Adw.PreferencesPage {
         fromRow.set_model(langList);
         this._miscGroup.add(fromRow);
         this._onLanguageChanged(fromRow, Fields.FROM, langCodes, true);
-        
+
         this._settings.connect('changed::' + Fields.FROM, (settings, key) => {
             this._onLanguageChanged(fromRow, Fields.FROM, langCodes, true);
         });
@@ -347,7 +343,6 @@ class GeneralPage extends Adw.PreferencesPage {
             }
         });
 
-        // 主要目标语言设置
         let toPrimaryRow = new Adw.ComboRow({
             title: _('Primary target language'),
             subtitle: _('Primary target language code (higher priority)')
@@ -355,7 +350,7 @@ class GeneralPage extends Adw.PreferencesPage {
         toPrimaryRow.set_model(langList);
         this._miscGroup.add(toPrimaryRow);
         this._onLanguageChanged(toPrimaryRow, Fields.TO_PRIMARY, langCodes, true);
-        
+
         this._settings.connect('changed::' + Fields.TO_PRIMARY, (settings, key) => {
             this._onLanguageChanged(toPrimaryRow, Fields.TO_PRIMARY, langCodes, true);
         });
@@ -366,21 +361,18 @@ class GeneralPage extends Adw.PreferencesPage {
             }
         });
 
-        // 次要目标语言设置（包含 "None" 选项）
         const secondaryLangList = new Gtk.StringList();
         const secondaryLangCodes = [];
         
-        // 添加 "None" 选项
         secondaryLangList.append(_('None'));
         secondaryLangCodes.push('');
         
-        // 添加所有语言（不包括 "Auto"）
         for (const langCode of sortedKeys) {
             const lang = isoLangs[langCode];
             secondaryLangList.append(`${lang.name} (${langCode})`);
             secondaryLangCodes.push(langCode);
         }
-        
+
         let toSecondaryRow = new Adw.ComboRow({
             title: _('Secondary target language'),
             subtitle: _('Secondary target language code (lower priority, optional)')
@@ -404,13 +396,10 @@ class GeneralPage extends Adw.PreferencesPage {
         const currentValue = this._settings.get_string(field) || (hasAuto ? 'auto' : '');
         let index = langCodes.indexOf(currentValue);
         if (index === -1) {
-            // 如果找不到，尝试查找默认值
             if (hasAuto && currentValue === '') {
                 index = langCodes.indexOf('auto');
-            } else if (!hasAuto && currentValue === 'auto') {
-                index = 0; // 选择 "None"
             } else {
-                index = 0; // 默认选择第一个
+                index = 0;
             }
         }
         if (index >= 0 && index < langCodes.length) {
