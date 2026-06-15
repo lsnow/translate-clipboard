@@ -14,6 +14,11 @@ import {providers as Providers} from './llm.js';
 import * as Utils from './utils.js';
 import * as Languages from './languages.js';
 
+const SOURCE_URL = 'https://github.com/lsnow/translate-clipboard';
+const ISSUES_URL = `${SOURCE_URL}/issues`;
+const LICENSE_URL = `${SOURCE_URL}/blob/main/LICENSE`;
+const EXTENSION_PAGE_URL = 'https://extensions.gnome.org/extension/4097/translate-clipboard/';
+
 class GeneralPage extends Adw.PreferencesPage {
     static {
         GObject.registerClass(this);
@@ -649,6 +654,61 @@ class AiPage extends Adw.PreferencesPage {
     }
 }
 
+class AboutPage extends Adw.PreferencesPage {
+    static {
+        GObject.registerClass(this);
+    }
+
+    _init(metadata) {
+        super._init({
+            title: _('About'),
+            icon_name: 'help-about-symbolic',
+            name: 'AboutPage'
+        });
+        this._metadata = metadata ?? {};
+
+        const aboutGroup = new Adw.PreferencesGroup({
+            title: this._metadata.name || _('Translate clipboard'),
+            description: _('Translate clipboard text.')
+        });
+        this.add(aboutGroup);
+
+        this._addInfoRow(aboutGroup, _('Version'), this._metadata.version?.toString() ?? _('Unknown'));
+        this._addInfoRow(aboutGroup, _('Privacy Notice'), _('This extension needs clipboard access and may send clipboard contents to third-party translation, text-to-speech, or LLM services.'));
+
+        const linksGroup = new Adw.PreferencesGroup();
+        this.add(linksGroup);
+
+        const sourceUrl = this._metadata.url || SOURCE_URL;
+        this._addLinkRow(linksGroup, _('Extension Page'), EXTENSION_PAGE_URL);
+        this._addLinkRow(linksGroup, _('Source Code'), sourceUrl);
+        this._addLinkRow(linksGroup, _('Report an Issue'), ISSUES_URL);
+        this._addLinkRow(linksGroup, _('License'), LICENSE_URL, _('GNU General Public License v3.0'));
+    }
+
+    _addInfoRow(group, title, value) {
+        const row = new Adw.ActionRow({
+            title,
+            subtitle: value
+        });
+        group.add(row);
+    }
+
+    _addLinkRow(group, title, uri, subtitle = uri) {
+        const row = new Adw.ActionRow({
+            title,
+            subtitle
+        });
+        const linkButton = new Gtk.LinkButton({
+            uri,
+            label: _('Open'),
+            valign: Gtk.Align.CENTER
+        });
+        row.add_suffix(linkButton);
+        group.add(row);
+    }
+}
+
 export default class TranslateClipboardExtensionPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         let provider = new Gtk.CssProvider();
@@ -660,8 +720,10 @@ export default class TranslateClipboardExtensionPreferences extends ExtensionPre
         const settings = this.getSettings();
         const generalPage = new GeneralPage(settings);
         const aiPage = new AiPage(settings);
+        const aboutPage = new AboutPage(this.metadata);
 
         window.add(generalPage);
         window.add(aiPage);
+        window.add(aboutPage);
     }
 }

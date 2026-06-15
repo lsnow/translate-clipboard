@@ -5,7 +5,6 @@ import Soup from 'gi://Soup?version=3.0';
 
 import * as Languages from './languages.js';
 import * as Utils from './utils.js';
-const ByteArray = imports.byteArray;
 
 export const providers = {
     /*
@@ -272,7 +271,7 @@ export var AiTranslator = GObject.registerClass({
                 }
                 request.request_headers.append('Authorization', `Bearer ${_apiKey}`);
                 request.request_headers.append('Content-type', 'application/json');
-                let bytes = GLib.Bytes.new(ByteArray.fromString(this._buildMessageBody(from, to, text)));
+                let bytes = GLib.Bytes.new(new TextEncoder().encode(this._buildMessageBody(from, to, text)));
                 request.set_request_body_from_bytes('application/json', bytes);
 
                 try {
