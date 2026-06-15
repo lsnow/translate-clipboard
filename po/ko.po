@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: translate-clipboard@lsnow.github.io\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-17 18:35+0800\n"
+"POT-Creation-Date: 2026-06-15 21:04+0800\n"
 "PO-Revision-Date: 2026-01-17 18:35+0800\n"
 "Last-Translator: lsnow <EMAIL@ADDRESS>\n"
 "Language-Team: lsnow <lsnow@github.io>\n"
@@ -17,186 +17,244 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/prefs.js:24
+#: src/prefs.js:29
 msgid "General"
 msgstr ""
 
-#: src/prefs.js:34
+#: src/prefs.js:39
 msgid "Enable or disable translation"
 msgstr ""
 
-#: src/prefs.js:35
+#: src/prefs.js:40
 msgid "Whether to automatically translate selected text"
 msgstr ""
 
-#: src/prefs.js:38 src/TcIndicator.js:73
+#: src/prefs.js:43 src/TcIndicator.js:73
 msgid "Brief mode"
 msgstr ""
 
-#: src/prefs.js:42
+#: src/prefs.js:47
 msgid "Auto hide"
 msgstr ""
 
-#: src/prefs.js:76
+#: src/prefs.js:81
 msgid "Cancel"
 msgstr ""
 
-#: src/prefs.js:80
+#: src/prefs.js:85
 msgid "Apply"
 msgstr ""
 
-#: src/prefs.js:95
+#: src/prefs.js:100
 msgid ""
 "Press the desired shortcut keys.\n"
 "Press Esc to cancel, Backspace to clear current input."
 msgstr ""
 
-#: src/prefs.js:105
+#: src/prefs.js:110
 msgid "Press a key..."
 msgstr ""
 
-#: src/prefs.js:122
+#: src/prefs.js:127
 msgid "Disabled"
 msgstr ""
 
-#: src/prefs.js:144
+#: src/prefs.js:149
 msgid "Cleared (Press Apply)"
 msgstr ""
 
-#: src/prefs.js:187
+#: src/prefs.js:192
 msgid "Shortcut keys for translating selected text"
 msgstr ""
 
-#: src/prefs.js:205
+#: src/prefs.js:210
 msgid "TTS Voice"
 msgstr ""
 
-#: src/prefs.js:206
+#: src/prefs.js:211
 msgid "Text-to-speech"
 msgstr ""
 
-#: src/prefs.js:236
+#: src/prefs.js:241
 msgid "Auto hide mode"
 msgstr ""
 
-#: src/prefs.js:237
+#: src/prefs.js:242
 msgid "How to auto hide the translation window"
 msgstr ""
 
-#: src/prefs.js:242
+#: src/prefs.js:247
 msgid "Timeout"
 msgstr ""
 
-#: src/prefs.js:243
+#: src/prefs.js:248
 msgid "Click outside"
 msgstr ""
 
-#: src/prefs.js:244
+#: src/prefs.js:249
 msgid "Both"
 msgstr ""
 
-#: src/prefs.js:274
+#: src/prefs.js:279
 msgid "Network proxy"
 msgstr ""
 
-#: src/prefs.js:283
+#: src/prefs.js:288
 msgid "Engine"
 msgstr ""
 
-#: src/prefs.js:284
+#: src/prefs.js:289
 msgid "Translation engine"
 msgstr ""
 
-#: src/prefs.js:314 src/TcIndicator.js:519 src/TcIndicator.js:601
+#: src/prefs.js:317 src/TcIndicator.js:423 src/TcIndicator.js:496
 msgid "Auto"
 msgstr ""
 
-#: src/prefs.js:333 src/TcIndicator.js:61
+#: src/prefs.js:334 src/TcIndicator.js:61
 msgid "Source language"
 msgstr ""
 
-#: src/prefs.js:334
+#: src/prefs.js:335
 msgid "Language code (e.g., en, zh, auto for auto-detect)"
 msgstr ""
 
-#: src/prefs.js:351 src/TcIndicator.js:62
+#: src/prefs.js:352 src/TcIndicator.js:62
 msgid "Primary target language"
 msgstr ""
 
-#: src/prefs.js:352
+#: src/prefs.js:353
 msgid "Primary target language code (higher priority)"
 msgstr ""
 
-#: src/prefs.js:371 src/TcIndicator.js:531 src/TcIndicator.js:599
+#: src/prefs.js:372 src/TcIndicator.js:435 src/TcIndicator.js:494
 msgid "None"
 msgstr ""
 
-#: src/prefs.js:381 src/TcIndicator.js:63
+#: src/prefs.js:382 src/TcIndicator.js:63
 msgid "Secondary target language"
 msgstr ""
 
-#: src/prefs.js:382
+#: src/prefs.js:383
 msgid "Secondary target language code (lower priority, optional)"
 msgstr ""
 
-#: src/prefs.js:422
+#: src/prefs.js:423
 msgid "LLM"
 msgstr ""
 
-#: src/prefs.js:437
+#: src/prefs.js:438
 msgid "Provider"
 msgstr ""
 
-#: src/prefs.js:438
+#: src/prefs.js:439
 msgid "LLM service provider"
 msgstr ""
 
-#: src/prefs.js:444
+#: src/prefs.js:445
 msgid "Endpoint"
 msgstr ""
 
-#: src/prefs.js:445
+#: src/prefs.js:446
 msgid "Endpoint for the LLM service"
 msgstr ""
 
-#: src/prefs.js:452
+#: src/prefs.js:453
 msgid "Undo"
 msgstr ""
 
-#: src/prefs.js:460
+#: src/prefs.js:461
 msgid "Model"
 msgstr ""
 
-#: src/prefs.js:461
+#: src/prefs.js:462
 msgid "Model name/identifier for the LLM service"
 msgstr ""
 
-#: src/prefs.js:468
+#: src/prefs.js:469
 msgid "Next model"
 msgstr ""
 
-#: src/prefs.js:474
+#: src/prefs.js:475
 msgid "More models"
 msgstr ""
 
-#: src/prefs.js:483
+#: src/prefs.js:484
 msgid "API Key"
 msgstr ""
 
-#: src/prefs.js:491
+#: src/prefs.js:492
 msgid "Signup"
 msgstr ""
 
-#: src/prefs.js:553
+#: src/prefs.js:500
 msgid "Prompt template"
 msgstr ""
 
-#: src/prefs.js:575
+#: src/prefs.js:520
 msgid "Reset All Settings"
 msgstr ""
 
+#: src/prefs.js:664
+msgid "About"
+msgstr ""
+
+#: src/prefs.js:671
+msgid "Translate clipboard"
+msgstr ""
+
+#: src/prefs.js:672
+msgid "Translate clipboard text."
+msgstr ""
+
+#: src/prefs.js:676
+msgid "Version"
+msgstr ""
+
+#: src/prefs.js:676
+msgid "Unknown"
+msgstr ""
+
+#: src/prefs.js:677
+msgid "Privacy Notice"
+msgstr ""
+
+#: src/prefs.js:677
+msgid ""
+"This extension needs clipboard access and may send clipboard contents to "
+"third-party translation, text-to-speech, or LLM services."
+msgstr ""
+
+#: src/prefs.js:680
+msgid "Links"
+msgstr ""
+
+#: src/prefs.js:685
+msgid "Extension Page"
+msgstr ""
+
+#: src/prefs.js:686
+msgid "Source Code"
+msgstr ""
+
+#: src/prefs.js:687
+msgid "Report an Issue"
+msgstr ""
+
+#: src/prefs.js:688
+msgid "License"
+msgstr ""
+
+#: src/prefs.js:688
+msgid "GNU General Public License v3.0"
+msgstr ""
+
+#: src/prefs.js:706
+msgid "Open"
+msgstr ""
+
 #: src/TcIndicator.js:65
-msgid "Toggle translate"
+msgid "Monitor the clipboard"
 msgstr ""
 
 #: src/TranslateWindow.js:120 src/TranslateWindow.js:143
