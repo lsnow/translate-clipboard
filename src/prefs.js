@@ -420,7 +420,7 @@ class AiPage extends Adw.PreferencesPage {
             name: 'LLM'
         });
         this._settings = settings;
-        // Create widget for setting provider, model, apikey, temperature, TopP, TopK, MinP, prompt
+        // Create widget for setting provider, model, apikey, prompt
         this._aiGroup = new Adw.PreferencesGroup();
         this.add(this._aiGroup);
 
@@ -490,67 +490,11 @@ class AiPage extends Adw.PreferencesPage {
         this._aiGroup.add(apiKeyRow);
         this._apiKeyRow = apiKeyRow;
 
-        // Temperature
-        const temperature = new Adw.SpinRow({
-            title: _('Temperature'),
-            digits: 2,
-            adjustment: new Gtk.Adjustment({
-                value: 0.70,
-                lower: 0.0,
-                upper: 2.0,
-                step_increment: 0.01
-            })
-        });
-        this._aiGroup.add(temperature);
-        this._temperatureRow = temperature;
-
-        // TopP
-        const topP = new Adw.SpinRow({
-            title: _('TopP'),
-            digits: 2,
-            adjustment: new Gtk.Adjustment({
-                value: 0.90,
-                lower: 0.0,
-                upper: 2.0,
-                step_increment: 0.01
-            })
-        });
-        this._aiGroup.add(topP);
-        this._topPRow = topP;
-
-        // TopK
-        const topK = new Adw.SpinRow({
-            title: _('TopK'),
-            adjustment: new Gtk.Adjustment({
-                value: 20,
-                lower: 0,
-                upper: 50,
-                step_increment: 1
-            })
-        });
-        this._aiGroup.add(topK);
-        this._topKRow = topK;
-
-        // MinP
-        const minP = new Adw.SpinRow({
-            title: _('MinP'),
-            digits: 2,
-            adjustment: new Gtk.Adjustment({
-                value: 0.0,
-                lower: 0.0,
-                upper: 2.0,
-                step_increment: 0.01
-            })
-        });
-        this._aiGroup.add(minP);
-        this._minPRow = minP;
-
+        // Prompt.
         this._extraGroup = new Adw.PreferencesGroup({
             title: _('Prompt template'),
         });
         this.add(this._extraGroup);
-
-        // Prompt.
         const promptScrolled = new Gtk.ScrolledWindow({
             height_request: 100,
             hexpand: false,

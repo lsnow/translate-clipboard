@@ -180,10 +180,6 @@ export var AiTranslator = GObject.registerClass({
             this._providerName = params.provider;
             this._schema = params.schema;
             this._model = params.model;
-            this._temperature = params.temperature;
-            this._top_p = params.topP;
-            this._top_k = params.topK;
-            this._min_p = params.minP;
             this._prompt = params.prompt;
         }
         if (!this._provider)

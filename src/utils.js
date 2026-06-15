@@ -13,18 +13,10 @@ export function writeConfig(settings, key, configs) {
     for (const [provider, config] of Object.entries(configs)) {
         const endpoint = new GLib.Variant('s', config.endpoint);
         const model = new GLib.Variant('s', config.model);
-        const temperature = GLib.Variant.new_double(config.temperature);
-        const topP = GLib.Variant.new_double(config.topP);
-        const topK = GLib.Variant.new_uint32(config.topK);
-        const minP = GLib.Variant.new_double(config.minP);
         const prompt = new GLib.Variant('s', config.prompt);
         const variantObject = {
             endpoint: endpoint,
             model: model,
-            temperature: temperature,
-            topP: topP,
-            topK: topK,
-            minP: minP,
             prompt: prompt
         };
         packed[provider] = new GLib.Variant('a{sv}', variantObject);

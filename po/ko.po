@@ -187,22 +187,6 @@ msgstr ""
 msgid "Signup"
 msgstr ""
 
-#: src/prefs.js:499
-msgid "Temperature"
-msgstr ""
-
-#: src/prefs.js:513
-msgid "TopP"
-msgstr ""
-
-#: src/prefs.js:527
-msgid "TopK"
-msgstr ""
-
-#: src/prefs.js:540
-msgid "MinP"
-msgstr ""
-
 #: src/prefs.js:553
 msgid "Prompt template"
 msgstr ""

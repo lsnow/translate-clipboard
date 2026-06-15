@@ -189,22 +189,6 @@ msgstr "API 密钥"
 msgid "Signup"
 msgstr "注册"
 
-#: src/prefs.js:499
-msgid "Temperature"
-msgstr "温度"
-
-#: src/prefs.js:513
-msgid "TopP"
-msgstr "TopP"
-
-#: src/prefs.js:527
-msgid "TopK"
-msgstr "TopK"
-
-#: src/prefs.js:540
-msgid "MinP"
-msgstr "MinP"
-
 #: src/prefs.js:553
 msgid "Prompt template"
 msgstr "提示词模板"

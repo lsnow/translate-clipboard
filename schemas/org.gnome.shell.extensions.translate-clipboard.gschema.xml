@@ -103,7 +103,7 @@
         Use google or LLM.
       </description>
     </key>
-    <!-- LLM: provider, model, apikey, Temperature, TopP, TopK, MinP, prompt -->
+    <!-- LLM: provider, model, apikey, prompt -->
     <key name="llm-provider" type="s">
       <default>'OpenRouter'</default>
       <summary>LLM Provider</summary>
