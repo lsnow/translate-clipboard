@@ -349,7 +349,7 @@ export const TranslateWindow = GObject.registerClass(
                     factor: 0,
                 }));
 
-            Main.layoutManager.addChrome(this._actor, { affectsInputRegion: true });
+            Main.layoutManager.addChrome(this._actor);
         }
 
         _close() {

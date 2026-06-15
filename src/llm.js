@@ -30,21 +30,32 @@ export const providers = {
     "openrouter": {
         name: "OpenRouter",
         models: [
-            "google/gemini-2.5-flash-preview-05-20",
-            "deepseek/deepseek-chat-v3-0324:free",
-            "google/gemini-2.5-pro-preview",
-            "deepseek/deepseek-r1",
+            "google/gemini-3.1-flash-lite",
+            "google/gemini-3.5-flash",
+            "~google/gemini-pro-latest",
+            "~google/gemini-flash-latest",
+            "google/gemma-4-26b-a4b-it:free",
+            "deepseek/deepseek-v4-flash",
+            "deepseek/deepseek-v4-pro",
+            "openai/gpt-chat-latest",
+            "~openai/gpt-latest",
+            "openai/gpt-5.4-nano",
+            "x-ai/grok-4.3",
+            "anthropic/claude-opus-4.8-fast",
             "anthropic/claude-sonnet-4",
             "anthropic/claude-opus-4",
-            "anthropic/claude-3.7-sonnet:beta", // $3/15
-            "anthropic/claude-3.7-sonnet", // $3/15
-            "anthropic/claude-3.5-sonnet", // $3/15
-            "openai/o3-mini",
-            "openai/o3",
-            "openai/o3-mini-high",
-            "openai/gpt-4o-mini",
-            "openai/gpt-4o",
-            "qwen/qwq-32b:free",
+            "anthropic/claude-3.7-sonnet",
+            "anthropic/claude-3.5-sonnet",
+            "moonshotai/kimi-k2.6",
+            "~moonshotai/kimi-latest",
+            "z-ai/glm-5.1",
+            "qwen/qwen3.6-flash",
+            "qwen/qwen3.7-plus",
+            "qwen/qwen3.5-flash-02-23",
+            "minimax/minimax-m3",
+            "stepfun/step-3.7-flash",
+            "xiaomi/mimo-v2.5",
+            "xiaomi/mimo-v2.5-pro",
         ],
         endpoint: "https://openrouter.ai/api/v1/chat/completions",
         getUrl: function (endpoint) {
@@ -59,10 +70,12 @@ export const providers = {
     "gemini": {
         name: "Google Gemini",
         models: [
-            "gemini-2.0-flash",
-            "gemini-1.5-flash",
-            "gemini-1.5-pro",
-            "gemini-1.0-pro"
+            "gemini-3.1-pro-preview",
+            "gemini-3.5-flash",
+            "gemini-2.5-flash",
+            "gemini-2.5-pro",
+            "gemini-3-flash-preview",
+            "gemini-3.1-flash-lite"
         ],
         endpoint: "",
         getUrl: function (endpoint, model, api_key) {
@@ -99,7 +112,7 @@ export const providers = {
     },
     "deepseek": {
         name: "DeekSeek",
-        models: ['deepseek-chat', 'deepseek-reasoner'],
+        models: ['deepseek-v4-flash', 'deepseek-v4-pro'],
         endpoint: "https://api.deepseek.com/chat/completions",
         signup: "https://platform.deepseek.com/api_keys",
         getApiKey: function () {

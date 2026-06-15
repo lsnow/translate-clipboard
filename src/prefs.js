@@ -574,10 +574,6 @@ class AiPage extends Adw.PreferencesPage {
                 Utils.storeApiKey(schema, this._provider, apiKey);
             });
         });
-        this._temperatureRow.connect('changed', (row) => { this._writeSettings(); });
-        this._topPRow.connect('changed', (row) => { this._writeSettings(); });
-        this._topKRow.connect('changed', (row) => { this._writeSettings(); });
-        this._minPRow.connect('changed', (row) => { this._writeSettings(); });
         this._promptBuffer.connect('changed', () => { this._writeSettings(); });
 
         this._resetEndpoint.connect('clicked', () => {
@@ -609,10 +605,6 @@ class AiPage extends Adw.PreferencesPage {
         const params = {
             endpoint: this._endpointRow.get_text(),
             model: this._modelRow.get_text(),
-            temperature: this._temperatureRow.get_value(),
-            topP: this._topPRow.get_value(),
-            topK: this._topKRow.get_value(),
-            minP: this._minPRow.get_value(),
             prompt: text,
         };
         configs[this._provider] = params;
@@ -629,10 +621,6 @@ class AiPage extends Adw.PreferencesPage {
         const params = configs[this._provider] ?? {};
         const endpoint = params.endpoint || Providers[this._provider].endpoint;
         const model = params.model || Providers[this._provider].models[0] || '';
-        const temperature = params.temperature ?? defaultConfig.temperature;
-        const topP = params.topP ?? defaultConfig.topP;
-        const topK = params.topK ?? defaultConfig.topK;
-        const minP = params.minP ?? defaultConfig.minP;
         const prompt = params.prompt ?? defaultConfig.prompt;
 
         const schema = this._settings.schema_id;
@@ -648,10 +636,6 @@ class AiPage extends Adw.PreferencesPage {
 
         this._endpointRow.set_text(endpoint);
         this._modelRow.set_text(model);
-        this._temperatureRow.set_value(temperature);
-        this._topPRow.set_value(topP);
-        this._topKRow.set_value(topK);
-        this._minPRow.set_value(minP);
         this._promptBuffer.set_text(prompt, -1);
 
         const signupUri = Providers[this._provider].signup;

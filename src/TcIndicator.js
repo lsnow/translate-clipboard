@@ -196,6 +196,7 @@ export const TcIndicator = GObject.registerClass(
                 toSecondary = this._getCode(toSecondary);
 
             this._toPrimary = toPrimary;
+            this._toSecondary = toSecondary;
 
             // Update the language selector value display
             if (this._fromSelector && this._fromSelector._valueLabel) {
@@ -406,8 +407,12 @@ export const TcIndicator = GObject.registerClass(
             let valueLabel = new St.Label({
                 text: '',
                 x_align: Clutter.ActorAlign.START,
+                y_expand: true,
+                y_align: Clutter.ActorAlign.CENTER,
                 style_class: 'tc-language-value'
             });
+
+            subMenuItem.insert_child_at_index(valueLabel, subMenuItem.get_n_children() - 1);
 
             let menuItems = {};
 
@@ -481,8 +486,6 @@ export const TcIndicator = GObject.registerClass(
         }
 
         _updateLanguageSelectorValue(valueLabel, value) {
-            if (!valueLabel) return;
-
             let displayValue = '';
             if (value === '' || value === null) {
                 displayValue = _("None");
@@ -505,11 +508,17 @@ export const TcIndicator = GObject.registerClass(
             let from = this._settings.get_string(Fields.FROM) || 'auto';
 
             if (from === 'auto' && this._toPrimary && this._toPrimary !== '') {
-                this._detectingLanguage = true;
+                if (this._engine == 'Google')
+                    this._detectingLanguage = true;
                 this._pendingText = text;
                 this._translator.translate('auto', this._toPrimary, this._proxy, text);
+            } else if (from === 'auto' && this._toSecondary && this._toSecondary !== '') {
+                if (this._engine == 'Google')
+                    this._detectingLanguage = true;
+                this._pendingText = text;
+                this._translator.translate('auto', this._toSecondary, this._proxy, text);
             } else {
-                let targetLang = this._toPrimary || this._settings.get_string(Fields.TO) || this._locale;
+                let targetLang = this._toPrimary || this._toSecondary || this._settings.get_string(Fields.TO) || this._locale;
                 this._translator.translate(from, targetLang, this._proxy, text);
             }
         }
