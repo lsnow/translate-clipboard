@@ -31,11 +31,15 @@ export var GoogleTranslator = GObject.registerClass({
     }
 
     translate(from, to, proxy, text) {
-        let session = new Soup.Session();
+        if (!this._session)
+            this._session = new Soup.Session();
+        else
+            this._session.abort();
+
         if ((proxy != null) && (proxy != '')) {
             let proxyResolver = Gio.SimpleProxyResolver.new(proxy, null);
             if (proxyResolver)
-                session.set_proxy_resolver(proxyResolver);
+                this._session.set_proxy_resolver(proxyResolver);
             else
                 this.emit('error', 'Invalid proxy protocol');
         }
@@ -47,10 +51,9 @@ export var GoogleTranslator = GObject.registerClass({
         request.request_headers.append('Content-type', 'application/json');
 
         try {
-            session.send_and_read_async(request, GLib.PRIORITY_DEFAULT, null,
+            this._session.send_and_read_async(request, GLib.PRIORITY_DEFAULT, null,
                 (session, result, error) => {
                     if (error) {
-                        //log('Failed to connect: ' + error.message);
                         this.emit('error', 'Failed to connect: ' + error.message);
                         return;
                     }
@@ -61,7 +64,7 @@ export var GoogleTranslator = GObject.registerClass({
             );
         }
         catch (error) {
-            log('unable to send libsoup json message: ' + error);
+            this.emit('error', 'Unable to send libsoup json message: ' + error);
         }
     }
 
@@ -82,21 +85,7 @@ export var GoogleTranslator = GObject.registerClass({
     }
 
     cleanup() {
+        if (this._session)
+            this._session.abort();
     }
 });
-
-/*
-let loop = GLib.MainLoop.new(null, false);
-let test = new GoogleTranslator();
-log(test);
-//test.connect('completed', onCompleted);
-test.connect('completed', (emitter, data) => {
-  log('Recieve completed: ' + data);
-});
-
-test.connect('error', (emitter, data) => {
-  log('Error: ' + data);
-});
-test.translate('en', 'zh', '', 'coefficient');
-loop.run();
-*/

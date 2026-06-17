@@ -757,9 +757,3 @@ export var isoLangs = {
         "nativeName":"Saɯ cueŋƅ"
     }
 }
-/*
-for (i in isoLangs)
-{
-    log(isoLangs[i].nativeName);
-}
-*/

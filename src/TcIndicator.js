@@ -352,7 +352,7 @@ export const TcIndicator = GObject.registerClass(
                     this._translator.translate(detectedLang, targetLang, this._proxy, text);
                     return;
                 } catch (error) {
-                    log('Failed to parse detection result: ' + error);
+                    //log('Failed to parse detection result: ' + error);
                     this._detectingLanguage = false;
                     this._pendingText = null;
                 }

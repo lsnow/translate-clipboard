@@ -1,7 +1,7 @@
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gio from 'gi://Gio';
-import Soup from 'gi://Soup?version=3.0';
+import Soup from 'gi://Soup';
 
 import * as Languages from './languages.js';
 import * as Utils from './utils.js';
@@ -251,12 +251,16 @@ export var AiTranslator = GObject.registerClass({
     }
 
     translate(from, to, proxy, text) {
-        let session = new Soup.Session();
+        if (!this._session)
+            this._session = new Soup.Session();
+        else
+            this._session.abort();
+
         //session.set_timeout(10);
         if ((proxy != null) && (proxy != '')) {
             let proxyResolver = Gio.SimpleProxyResolver.new(proxy, null);
             if (proxyResolver)
-                session.set_proxy_resolver(proxyResolver);
+                this._session.set_proxy_resolver(proxyResolver);
             else
                 this.emit('error', 'Invalid proxy protocol');
         }
@@ -275,7 +279,7 @@ export var AiTranslator = GObject.registerClass({
                 request.set_request_body_from_bytes('application/json', bytes);
 
                 try {
-                    session.send_and_read_async(request, GLib.PRIORITY_DEFAULT, null,
+                    this._session.send_and_read_async(request, GLib.PRIORITY_DEFAULT, null,
                         (session, result, error) => {
                             if (error) {
                                 this.emit('error', 'Failed to connect: ' + error.message);
@@ -326,16 +330,9 @@ export var AiTranslator = GObject.registerClass({
             this.emit('error', error.message);
         }
     }
+
+    cleanup() {
+        if (this._session)
+            this._session.abort();
+    }
 });
-
-let params = {
-    provider: 'openrouter',
-    model: 'deepseek/deepseek-chat-v3-0324:free'
-};
-
-/*
-var loop = GLib.MainLoop.new(null, false);
-const test = new AiTranslator(params);
-test.translate('auto', 'zh', null, 'autograd');
-loop.run();
-*/

@@ -771,8 +771,8 @@ export const TranslateWindow = GObject.registerClass(
                     }
                 }
             } catch (error) {
-                log('Failed with error ' + error + ' @ ' + error.lineNumber);
-                log(error.stack);
+                console.debug('Failed with error ' + error + ' @ ' + error.lineNumber);
+                console.debug(error.stack);
 
                 let errorMsg = error.message || String(error);
                 if (!errorMsg.includes(_('language settings'))) {

@@ -673,7 +673,6 @@ class AboutPage extends Adw.PreferencesPage {
         });
         this.add(aboutGroup);
 
-        this._addInfoRow(aboutGroup, _('Version'), this._metadata.version?.toString() ?? _('Unknown'));
         this._addInfoRow(aboutGroup, _('Privacy Notice'), _('This extension needs clipboard access and may send clipboard contents to third-party translation, text-to-speech, or LLM services.'));
 
         const linksGroup = new Adw.PreferencesGroup();

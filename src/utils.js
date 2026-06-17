@@ -45,7 +45,10 @@ export function storeApiKey(settings, provider, apikey, onError) {
             null, null
         );
     } catch (e) {
-        onError(`Failed to store apikey for ${provider}: ${e.message}`);
+        if (onError)
+            onError(`Failed to store apikey for ${provider}: ${e.message}`);
+        else
+            console.debug(`Failed to store apikey for ${provider}: ${e.message}`);
     }
 }
 
@@ -73,7 +76,7 @@ export function getApiKey(settings, provider, onComplete, onError) {
         if (onError)
             onError(`Failed to get apikey for ${provider}: ${e.message}`);
         else
-            log(`Failed to get apikey for ${provider}: ${e.message}`);
+            console.debug(`Failed to get apikey for ${provider}: ${e.message}`);
     }
 }
 
@@ -98,6 +101,6 @@ export function removeApiKey(settings, provider, onComplete) {
             }
         );
     } catch (e) {
-        log(`Failed to rm apikey for ${provider}: ${e.message}`);
+        console.debug(`Failed to rm apikey for ${provider}: ${e.message}`);
     }
 }
