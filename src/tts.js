@@ -168,15 +168,17 @@ export class AzureTTS extends GObject.Object {
                     log('Failed to connect: ' + e.message);
                     return;
                 }
-                this._onMessageId = this.websocket.connect('message', (ws, type, msg) => {
-                    this._onMessage(type, msg);
-                });
-                this._onClosedId = this.websocket.connect('closed', () => {
-                    this._onClosed();
-                });
-                this._onErrorId = this.websocket.connect('error', (ws, error) => {
-                    this._onError(error);
-                });
+                this.websocket.connectObject(
+                    'message', (ws, type, msg) => {
+                        this._onMessage(type, msg);
+                    },
+                    'closed', () => {
+                        this._onClosed();
+                    },
+                    'error', (ws, error) => {
+                        this._onError(error);
+                    },
+                    this);
                 this._sendText(text);
             }
         );
@@ -311,18 +313,8 @@ export class AzureTTS extends GObject.Object {
     }
 
     _disconnectSignals() {
-        if (this._onMessageId) {
-            this.websocket.disconnect(this._onMessageId);
-            this._onMessageId = null;
-        }
-        if (this._onClosedId) {
-            this.websocket.disconnect(this._onClosedId);
-            this._onClosedId = null;
-        }
-        if (this._onErrorId) {
-            this.websocket.disconnect(this._onErrorId);
-            this._onErrorId = null;
-        }
+        if (this.websocket)
+            this.websocket.disconnectObject(this);
     }
 
     _stopPlayAudio() {
@@ -373,17 +365,4 @@ export class AzureTTS extends GObject.Object {
             this._session = null;
         }
     }
-}
-
-//if (typeof ARGV !== 'undefined' && ARGV[1]?.endsWith('tts.js'))
-{
-    let params = {
-        engine: 'zh-CN-XiaoxiaoNeural',
-        codec: defaultCodec,
-    };
-
-    let loop = GLib.MainLoop.new(null, false);
-    let test = new AzureTTS(params);
-    test.playAudio('乘彼白云，至于帝乡。');
-    loop.run();
 }
