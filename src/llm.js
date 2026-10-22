@@ -179,6 +179,7 @@ export var AiTranslator = GObject.registerClass({
             this._provider = providers[params.provider];
             this._providerName = params.provider;
             this._schema = params.schema;
+            this._endpoint = params.endpoint;
             this._model = params.model;
             this._temperature = params.temperature;
             this._top_p = params.topP;
@@ -256,7 +257,8 @@ export var AiTranslator = GObject.registerClass({
         Utils.getApiKey(this._schema, this._providerName,
             (apiKey) => {
                 const _apiKey = apiKey || this._provider.getApiKey() || '';
-                let url = this._provider.getUrl ? this._provider.getUrl(this._provider.endpoint, this._model) : this._provider.endpoint;
+                let endpoint = this._endpoint || this._provider.endpoint;
+                let url = this._provider.getUrl ? this._provider.getUrl(endpoint, this._model) : endpoint;
                 let request = Soup.Message.new('POST', url);
                 if (!request) {
                     this.emit('error', 'Unable to create request for: ' + url);
