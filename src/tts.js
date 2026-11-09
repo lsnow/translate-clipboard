@@ -6,6 +6,7 @@ import Gst from 'gi://Gst';
 // this._appsrc is GstApp.AppSrc
 import GstApp from 'gi://GstApp';
 
+import * as Params from 'resource:///org/gnome/shell/misc/params.js';
 import * as Voices from './config/voices.js';
 
 // Azure Speech API
@@ -124,9 +125,8 @@ export class AzureTTS extends GObject.Object {
         GObject.registerClass(this);
     }
 
-    _init(params = {}) {
-        params = params || {};
-
+    _init(params) {
+        params = Params.parse(params, null);
         this.engine = params.engine || defaultVoice;
         this.codec = params.codec || defaultCodec;
         this.lang = params.lang || null;

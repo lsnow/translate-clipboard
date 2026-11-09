@@ -6,7 +6,8 @@
   "settings-schema": "org.gnome.shell.extensions.translate-clipboard",
   "shell-version": [
     "49",
-    "50"
+    "50",
+    "51"
   ],
   "url": "https://github.com/lsnow/translate-clipboard",
   "uuid": "translate-clipboard@lsnow.github.io"

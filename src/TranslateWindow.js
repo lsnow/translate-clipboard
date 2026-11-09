@@ -283,7 +283,7 @@ export const TranslateWindow = GObject.registerClass(
             this._actor.add_child(this._scroll);
             this._box = new St.BoxLayout({
                 style_class: "translate-box",
-                vertical: true,
+                orientation: Clutter.Orientation.VERTICAL,
                 x_expand: true,
                 y_expand: true
             });
@@ -492,7 +492,7 @@ export const TranslateWindow = GObject.registerClass(
             let box = new St.BoxLayout(
                 {
                     style_class: 'tc-normal-label-box',
-                    vertical: false,
+                    orientation: Clutter.Orientation.HORIZONTAL,
                 });
 
             let label1 = new St.Label({
@@ -549,8 +549,8 @@ export const TranslateWindow = GObject.registerClass(
 
         _createTextWithPlayButton(label, text, showPlayButton = true) {
             let textBox = new St.BoxLayout({
-                vertical: false,
                 style_class: 'tc-text-with-play',
+                orientation: Clutter.Orientation.HORIZONTAL,
                 x_expand: true
             });
             textBox.add_child(label);
@@ -599,7 +599,7 @@ export const TranslateWindow = GObject.registerClass(
             }
             try {
                 this._resBox = new St.BoxLayout({
-                    vertical: true,
+                    orientation: Clutter.Orientation.VERTICAL,
                     style_class: 'tc-result-box'
                 });
                 this._box.add_child(this._resBox);
@@ -722,7 +722,7 @@ export const TranslateWindow = GObject.registerClass(
                 }
 
                 let summaryBox = new St.BoxLayout({
-                    vertical: true,
+                    orientation: Clutter.Orientation.VERTICAL,
                     track_hover: false,
                     reactive: true,
                     style_class: 'tc-section-box'
@@ -796,7 +796,7 @@ export const TranslateWindow = GObject.registerClass(
 
                 if (!this._resBox) {
                     this._resBox = new St.BoxLayout({
-                        vertical: true,
+                        orientation: Clutter.Orientation.VERTICAL,
                         style_class: 'tc-result-box'
                     });
                     this._box.add_child(this._resBox);

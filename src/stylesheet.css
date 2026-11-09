@@ -56,7 +56,6 @@
 }
 
 .tc-search-entry {
-    width: 100%;
     margin: 0 0 8px 0;
 }
 
@@ -66,7 +65,6 @@
 
 .tc-text-with-play {
     spacing: 6px;
-    width: 100%;
 }
 
 .tc-text-with-play .tc-title-label {
